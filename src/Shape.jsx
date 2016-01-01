@@ -6,35 +6,32 @@ import Color from 'color';
 import {Group, Line, Circle} from 'react-konva';
 import ShapeEditorPanel from './ShapeEditorPanel.jsx'
 
+/*
+    PROPS:
+        index           the shape's index in the shapeCanvas's list of shapes
+        points          the array of x,y coordinates are the shape's vertecies
+
+        isSelected      bool representing whether the shape is selected (clicked on)
+        activeTool      the project's active tool
+
+        colorsList      the list of colors used in the project
+        colorIndex      the index in the colorsList of the shape's color
+
+        onShapeClick    function to run when shape is clicked
+        onDelete        function to run when shape is deleted
+        tempo           the project's tempo
+*/
 class Shape extends React.Component {
     constructor (props) {
         super();
-        
-        const color = props.colorsList[props.colorIndex];
-        
-        const fillColor = Color(color).alpha(0.4).toString();
-        const strokeColor = Color(color).toString();
-
-        this.shapeDefaultAttrs = {
-            strokeWidth: 2,
-            stroke: strokeColor,
-            fill: fillColor
-        }
-
-        this.shapeHoverAttrs = {
-            strokeWidth: 4,
-            stroke: strokeColor,
-            fill: fillColor
-        }
 
         this.state = {
             volume: -5,
             points: props.points,
-            attrs: this.shapeDefaultAttrs,
             colorIndex: props.colorIndex,
+            isHoveredOver: false,
             editorX: 0,
             editorY: 0,
-            editorOpen: false
         };
 
         this.handleVolumeChange = this.handleVolumeChange.bind(this)
@@ -48,10 +45,8 @@ class Shape extends React.Component {
         this.handleMouseDown = this.handleMouseDown.bind(this);    
         this.handleDragStart = this.handleDragStart.bind(this);    
         this.handleDragEnd = this.handleDragEnd.bind(this);    
-        this.handlePortalOutsideMouseClick = this.handlePortalOutsideMouseClick.bind(this);    
 
         this.handleDelete = this.handleDelete.bind(this);    
-        this.handleDelete = this.handleDelete.bind(this);
     }
     
     componentDidMount () {
@@ -59,9 +54,12 @@ class Shape extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
-            
-
+        if (nextProps.activeTool === 'draw') {
+            this.setState({
+                isHoveredOver: false
+            })
         }
+    }
 
 
     /* ============================== HANDLERS ============================== */
@@ -90,36 +88,30 @@ class Shape extends React.Component {
     }
 
     handleShapeDrag (e) {
-
+        console.log(e.target.getAbsolutePosition());
     }
 
     handleDragStart (e) {
-        // this.setState({
-        //     editorOpen: false
-        // });
+    
     }
 
     handleDragEnd (e) {
-        // this.setState({
-        //     editorX: e.evt.offsetX,
-        //     editorY: e.evt.offsetY,
-        //     editorOpen: false
-        // });
+
     }
 
     handleMouseOver (e) {
         this.setState({
-            attrs: this.shapeHoverAttrs
+            isHoveredOver: true
         })
     }
 
     handleMouseOut () {
         this.setState({
-            attrs: this.shapeDefaultAttrs
+            isHoveredOver: false
         })
     }
 
-    /* --- Editor ----------------------------------------------------------- */
+    /* --- Editor Panel ----------------------------------------------------- */
 
     handleVolumeChange (val) {
         this.setState({
@@ -127,38 +119,14 @@ class Shape extends React.Component {
         });
     }
 
-    handlePortalOpen () {
-        console.log("portal open")
-    }
-
-    handlePortalOutsideMouseClick () {
-        console.log("outside mouse click")
-    }
-
-    handleColorChange (val) {
-        const color = this.props.colorsList[val.value];
-        
-        const fillColor = Color(color).alpha(0.4).toString();
-        const strokeColor = Color(color).toString();
-
-        this.shapeDefaultAttrs = {
-            strokeWidth: 2,
-            stroke: strokeColor,
-            fill: fillColor
+    handleColorChange (colorIndex) {
+        return () => {
+            this.setState({
+                colorIndex: colorIndex
+            })
         }
-
-        this.shapeHoverAttrs = {
-            strokeWidth: 4,
-            stroke: strokeColor,
-            fill: fillColor
-        }
-        
-        this.setState({
-            attrs: this.shapeDefaultAttrs,
-            colorIndex: val.value
-        })
-
     }
+
     /* --- Vertecies -------------------------------------------------------- */
 
     handleVertexDragMove(i) {
@@ -177,22 +145,32 @@ class Shape extends React.Component {
     /* =============================== RENDER =============================== */
 
     render () {
+        const color = this.props.colorsList[this.state.colorIndex];
+        const isEditMode = this.props.activeTool === 'edit';
+        const alphaAmount = this.props.isSelected ? 0.8 : 0.4;
+
+        const attrs = {
+            strokeWidth: isEditMode ? (this.state.isHoveredOver ? 4 : 2) : 2,
+            stroke: color,
+            fill: Color(color).alpha(alphaAmount).toString()
+        }
+
         // show vertex handles if in edit mode, allow dragging to reshape
-        if (this.props.activeTool === 'edit') {
-            return (        
+        if (isEditMode) {
+            return (
                 <Group 
                     ref= {c => this.groupElement = c}
                     draggable={true}
                     onDragMove={this.handleShapeDrag}
                     onDragStart={this.handleDragStart}
-                    onDragEnd={this.handleDragEnd}
-                >
+                    onDragEnd={this.handleDragEnd}>
+                    
                     <Line
                         points={this.state.points}
-                        fill={this.state.attrs.fill}
+                        fill={attrs.fill}
                         lineJoin='bevel'
-                        stroke={this.state.attrs.stroke}
-                        strokeWidth={this.state.attrs.strokeWidth}
+                        stroke={attrs.stroke}
+                        strokeWidth={attrs.strokeWidth}
                         closed={true}
                         
                         onClick={this.handleShapeClick}
@@ -200,15 +178,16 @@ class Shape extends React.Component {
                         onMouseOver={this.handleMouseOver}
                         onMouseOut={this.handleMouseOut}
                     />
+                    
                     {this.state.points.map((p, i, arr) => {
                         if (!(i % 2)) {
                             return (
                                 <ShapeVertex 
                                     key={i}
+                                    index={i}
                                     p={{x: p, y: arr[i+1]}}
                                     onVertexDragMove={this.handleVertexDragMove(i)}
-                                    color={this.props.colorsList[this.state.colorIndex]}
-                                    index={i}
+                                    color={color}
                                 />);
                         } else {
                             return null
@@ -228,6 +207,7 @@ class Shape extends React.Component {
                             tempo={this.props.tempo} 
                             onDeleteClick={this.handleDelete}
                             colorIndex={this.state.colorIndex}
+                            colorsList={this.props.colorsList}
                             onColorChange={this.handleColorChange}
                         />
                     </Portal>
@@ -241,17 +221,19 @@ class Shape extends React.Component {
                 <Group 
                     draggable={false}
                     ref= {c => this.groupElement = c}>
+                    
                     <Line
                         points={this.state.points}
-                        fill={this.state.attrs.fill}
+                        fill={attrs.fill}
                         lineJoin='miter'
-                        stroke={this.state.attrs.stroke}
-                        strokeWidth={this.state.attrs.strokeWidth}
+                        stroke={color}
+                        strokeWidth={attrs.strokeWidth}
                         closed={true}
                     />
+                    
                     <ShapeVertex 
                         index={0}
-                        color={this.props.colorsList[this.state.colorIndex]}
+                        color={color}
                         p={{x: this.state.points[0], y: this.state.points[1]}}
                         onVertexDragMove={this.handleVertexDragMove(0)}
                     />

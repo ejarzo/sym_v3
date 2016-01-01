@@ -3,8 +3,6 @@ import Select from 'react-select'
 
 // sliders
 import Slider from 'react-rangeslider'
-import 'react-rangeslider/lib/index.css'
-import './css/rangeslider.css';
 
 
 /*
@@ -71,44 +69,87 @@ class ShapeEditorPanel extends Component {
 
     render() {
         const editorArrowClass = this.state.editorArrowIsLeft ? "arrow-left" : "arrow-right"
+        
+        const sliderStyle = {
+            "background": "#000"
+        }
+
         return(    
             <div className="shape-editor-panel" style={this.divStyle}>
-                <div>
-                    Shape: {this.props.index}
+                
+           
+                <div className="row section">
+                    <div className="col col-12">
+                        <div className="shape-color-picker">
+                            {this.props.colorsList.map((color, i) => {
+                                const isSelected = i === this.props.colorIndex;
+
+                                const style = {
+                                    backgroundColor: color,
+                                    opacity: isSelected ? 1 : 0.4,
+                                    //transform: isSelected ? "scale(1.2)" : "scale(1)",
+                                    //zIndex: isSelected ? 1 : 0
+                                }
+                                return (
+                                    <div 
+                                        className="shape-color-option" 
+                                        style={style}
+                                        onClick={this.props.onColorChange(i)}>
+                                        
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+
+                    <div className="col col-6 slider-container">
+                        <Slider
+                            className={"color-"+ this.props.colorIndex}
+                            orientation='vertical'
+                            min={-18}
+                            max={0}
+                            value={this.props.volume}
+                            onChange={this.props.onVolumeChange}
+                        />
+                    </div>
+
+                    <div className="col col-6">
+                        <div className="col col-12">
+                            <label>Mute</label>
+                            <input type="checkbox" />
+                        </div>
+                        <div className="col col-12">
+                            <label>Solo</label>
+                            <input type="checkbox"/>
+                        </div>
+                        </div>
                 </div>
-                <span className="ctrl-elem small">
-                    <label>Color</label>
-                    <Select
-                    searchable={false}
-                    clearable={false}
-                    name="Color Select"
-                    value={this.props.colorIndex}
-                    options={[
-                            {value: 0, label: 0},
-                            {value: 1, label: 1},
-                            {value: 2, label: 2},
-                            {value: 3, label: 3},
-                            {value: 4, label: 4},
-                        ]}
-                    onChange={this.props.onColorChange}
-                    />
-                </span>
-                <Slider
-                    orientation='vertical'
-                    min={-18}
-                    max={0}
-                    value={this.props.volume}
-                    onChange={this.props.onVolumeChange}
-                />
-                <div>
-                    Volume: {this.props.volume}
+
+                <div className="row section">   
+                    <div className="col col-6">
+                        <button>Quantize</button>
+                    </div>                    
+                    
                 </div>
-                <div>
-                    Tempo: {this.props.tempo}
+
+                <div className="row section">   
+                    <div className="col col-6">
+                        <button>To Front</button>
+                    </div>
+                    <div className="col col-6">
+                        <button>To Back</button>
+                    </div>
                 </div>
-                <button onClick={this.props.onDeleteClick}>
-                    Delete
-                </button>
+
+                <div className="row section">   
+                    <div className="col col-12">
+                        <button onClick={this.props.onDeleteClick}>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+               
                 <div className={"tooltip-arrow " + editorArrowClass} style={this.arrowStyle}></div>
             </div>
         );

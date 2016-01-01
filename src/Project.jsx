@@ -5,9 +5,6 @@ import Select from 'react-select';
 import NumericInput from 'react-numeric-input';
 import Toggle from 'react-toggle';
 
-import './css/react-select/react-select-theme.css';
-import './css/react-toggle/react-toggle.css';
-import "./css/ionicons.min.css";
 
 import ShapeCanvas from './ShapeCanvas.jsx';
 import drawIcon from './img/draw-icon.svg'
@@ -71,7 +68,6 @@ class Project extends Component {
             
             isPlaying: false,
             activeTool: 'draw',
-            //activeColor: colorsList[0],
             activeColorIndex: 0
         }
 
@@ -178,9 +174,19 @@ class Project extends Component {
 
     handleKeyDown(event) {
         console.log(event.key);
+        
+        /* tab toggles active tool */
         if(event.key === 'Tab') {
             event.preventDefault();
             this.toggleActiveTool();
+        }
+        
+        /* numbers control draw color */
+        if (event.key === '1' || event.key === '2' || event.key === '3' ||
+            event.key === '4' || event.key === '5') {
+            this.setState({
+                activeColorIndex: parseInt(event.key) - 1
+            })
         }
     }
 

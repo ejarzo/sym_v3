@@ -31,7 +31,15 @@ class ShapeCanvas extends Component {
         
         this.clearAll = this.clearAll.bind(this);
     }
-       
+    
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.activeTool === 'draw') {
+            this.setState({
+                selectedShapeIndex: -1
+            })
+        }
+    }
+    
     appendShape() {
         let shapesList = this.state.shapesList.slice();
         const points = this.state.currPoints.slice();
@@ -213,7 +221,7 @@ class PhantomShape extends Component {
         if (this.props.activeTool === 'draw') {
             return (
                 <Group>
-                    <Circle // circle beneath mouse
+                    <Circle // circle beneath cursor
                         x={this.props.mousePos.x} 
                         y={this.props.mousePos.y}
                         radius={this.radius}
@@ -230,7 +238,7 @@ class PhantomShape extends Component {
                         fillEnabled={true}
                         closed={this.props.drawingState === 'preview'}
                     />
-                    <Line // line from previous point to mouse
+                    <Line // line from previous point to cursor
                         points={this.props.points.slice(-2).concat([this.props.mousePos.x, this.props.mousePos.y])}
                         strokeWidth={this.strokeWidth}
                         stroke={this.props.color}

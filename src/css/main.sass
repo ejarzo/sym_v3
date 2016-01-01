@@ -252,110 +252,71 @@ ul
     left: 100px
     top: 100px
     padding: 5px 15px
-    
-    //width: 100%
-    //height: 100%
-    
+
     .rangeslider__labels
         display: none !important
-    .color-palette
-        color: $color-white
-        text-align: center
-        left: 0
-        position: relative
-        top: 0px
-        i
-            position: relative
-            top: 2px
 
     .tooltip-arrow
         @include tooltip_arrow
+    
+    .slider-container
+        text-align: center
 
     .section
-        padding: 10px 0 10px 0
-
-    .close-popup 
-        display: inline-block
-        width: 100%
-        text-align: right
-        color: #CCC
         padding-top: 5px
-
-    .shape-attr-start-freq
-        padding: 1px 5px 
-    
-    .start-freq-label
-        display: inline-block
-        text-transform: capitalize
-        width: 20px
+        padding-bottom: 15px
     
     .signal-meter 
         vertical-align: middle
+    .col
+        margin-top: 0
+        margin-bottom: 0
 
-    .arrow 
-        @include button_expand_on_hover
-        padding: 0
-        height: auto
-        width: auto
-        background: transparent
-        top: 2px
-        font-size: 20px
-        position: relative
-        border: none
-
-        &:hover 
-            background-color: transparent
-
-        &.arrow-up 
-            margin-left: 8px
-
-        &.arrow-down 
-            margin-left: -3px
+    input[type=checkbox]
+        position: absolute
+        top: -9999px
+        left: -9999px
+    
+    label
+        border-radius: 1px
+        width: 100%
+        color: $color-grey-dark
+        border: 1px solid $color-grey-light
+        display: inline-block
+        cursor: pointer
 
     button
-        background: $color-grey-lighter
-        border-radius: 2px
+        //background: $color-grey-light
+        border-radius: 1px
         width: 100%
+        color: $color-grey-dark
         border: 1px solid $color-grey-light
+        
+        &:hover
+            //background: $color-grey-light
+            //color: #fff
+
         &:active
-            background: $color-grey-light
+            background: darken($color-grey-lighter, 10)
 
         &.shape-attr-delete-shape
             background: none
             @include button_warning
             padding-top: 4px
             border: none
-
-    .mute-solo 
-        button 
-            background: none
-            text-align: center
-            display: block
-            margin: 0 auto
-            padding: 2px 4px
-            border: none
-        
-    .button-cont 
-        .btn-half
-            width: 45%
-        
-        display: inline-block
-        padding: 0 8px
-        text-align: center
-        width: 50%
-        //height: 100%
-        .shape-attr-mute
-            border: 1px solid $color-mute
-            color: $color-mute
-
-        .shape-attr-unmute
-            background-color: $color-mute
-            color: $color-white
-
-        .shape-attr-solo
-            border: 1px solid $color-solo
-            color: $color-solo
-
-        .shape-attr-unsolo
-            background-color: $color-solo
-            color: $color-white
+    
+    .shape-color-picker
+        margin-top: 10px
+        padding: 0 5px
+        margin-bottom: 15px
+        .shape-color-option
+            display: inline-block
+            width: 20%
+            height: 10px
+            position: relative
+            transition: all 0.2s
+            &:hover
+                transform: scale(1.2) !important
+                z-index: 2 !important
+                opacity: 1 !important
+                cursor: pointer
