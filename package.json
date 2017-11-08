@@ -1,0 +1,23 @@
+{
+  "name": "sym_v3",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^16.0.0",
+    "react-canvas-knob": "^0.5.0",
+    "react-dom": "^16.0.0",
+    "react-ionicons": "^2.0.2",
+    "react-numeric-input": "^2.2.0",
+    "react-rangeslider": "^2.2.0",
+    "react-scripts": "1.0.17",
+    "react-select": "^1.0.0-rc.10",
+    "styled-components": "^2.2.3",
+    "teoria": "^2.5.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
