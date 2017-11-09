@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 
 import Teoria from 'teoria'
 import Select from 'react-select'
@@ -6,6 +7,7 @@ import './css/react-select/react-slider-theme.css';
 import NumericInput from 'react-numeric-input'
 import "./css/ionicons.min.css"
 import Shape from './Shape.jsx'
+import {Stage, Layer, Line, Circle, Group} from 'react-konva';
 
 /* ========================================================================== */
 
@@ -47,62 +49,143 @@ const scalesList = [
 
 class Project extends Component {
   
-  constructor(props) {
-    super(props);
+    constructor(props) {
+        super(props);
 
-    this.state = {
-      name: props.initState.name,
-      tempo: props.initState.tempo,
-      scaleObj: Teoria.note(props.initState.tonic).scale(props.initState.scale),
-      //rootNote: scaleObj.tonic.name(),
-      synthControllersList: [],
-      shapesList: [],
-      instColors: [],
-      quantizeLength: 700,
+        this.state = {
+            name: props.initState.name,
+            tempo: props.initState.tempo,
+            scaleObj: Teoria.note(props.initState.tonic).scale(props.initState.scale),
+            //rootNote: scaleObj.tonic.name(),
+            synthControllersList: [],
+            shapesList: [],
+            instColors: [],
+            quantizeLength: 700,
+            
+            drawingState: 'drawing',
+            mousePos: {x: 0, y: 0},
+            currPoints: [],
+            isPlaying: false,
+        }
 
-      isPlaying: false
+        this.handlePlayClick = this.handlePlayClick.bind(this)
+        this.handleTempoChange = this.handleTempoChange.bind(this)
+        this.handleTonicChange = this.handleTonicChange.bind(this)
+        this.handleScaleChange = this.handleScaleChange.bind(this)
+        
+        this.handleClick = this.handleClick.bind(this)
+        this.handleMouseMove = this.handleMouseMove.bind(this)
+        
+        this.testEl;
+        
+    }
+    
+    componentDidMount() {
+      
     }
 
-    this.handlePlayClick = this.handlePlayClick.bind(this)
-    this.handleTempoChange = this.handleTempoChange.bind(this)
-    this.handleTonicChange = this.handleTonicChange.bind(this)
-    this.handleScaleChange = this.handleScaleChange.bind(this)
-  }
+    appendShape() {
+        let shapesList = this.state.shapesList.slice();
+        console.log(this.state.shapesList);
+        const points = this.state.currPoints.slice();
+        
+        const newShape = <Shape ref={el => this.testEl = el}
+                            tempo={this.state.tempo} 
+                            points={this.state.currPoints} 
+                            //isCompleted={this.state.currShapeIsCompleted} 
+                            />
+        
+        
 
-  handlePlayClick () {
-    this.setState((prevState) => ({
-      isPlaying: !prevState.isPlaying
-    }));
-  }
-  
-  handleTempoChange (val) {
-    this.setState({
-      tempo: val
-    })
-  }
+        shapesList.push(newShape);
+        
+        this.setState({
+            shapesList: shapesList,
+            currPoints: []
+        })
+    }
 
-  handleTonicChange (val){
-    this.setState((prevState) => ({
-      scaleObj: Teoria.note(val.value).scale(prevState.scaleObj.name),
-    }));
-  }
+    /* ============================== HANDLERS ============================== */
+    handlePlayClick () {
+        this.setState((prevState) => ({
+            isPlaying: !prevState.isPlaying
+        }));
+    }
+    
+    handleTempoChange (val) {
+        this.setState({
+            tempo: val
+        })
+    }
 
-  handleScaleChange (val) {
-    const tonic = this.state.scaleObj.tonic;
-    this.setState({
-      scaleObj: tonic.scale(val.value),
-    })
-  }
+    handleTonicChange (val){
+        this.setState((prevState) => ({
+            scaleObj: Teoria.note(val.value).scale(prevState.scaleObj.name),
+        }));
+    }
 
-  render() {    
-    const playButtonClass = this.state.isPlaying ? "ion-stop" : "ion-play";
+    handleScaleChange (val) {
+        const tonic = this.state.scaleObj.tonic;
+        this.setState({
+            scaleObj: tonic.scale(val.value),
+        })
+    }
 
-    return (
-      <div>
-        <div className="controls">
-            
+    handleClick (e) {
+        // hovering over first point
+        if (this.state.drawingState === 'preview') {
+            this.appendShape();
+        } else {
+            let newPoints = this.state.currPoints.slice();
+            console.log(newPoints)
+            newPoints.push(this.state.mousePos.x, this.state.mousePos.y);
+            this.setState({
+                currPoints: newPoints
+            })
+        }
+    }
+
+    handleMouseMove (e) {
+        let x = e.evt.offsetX;
+        let y = e.evt.offsetY;
+        const origin_x = this.state.currPoints[0];
+        const origin_y = this.state.currPoints[1];
+        
+        const ORIGIN_RADIUS = 15;
+        
+        let drawingState = this.state.drawingState;
+
+        // snap to origin
+        if (this.state.currPoints.length && dist(x,y,origin_x,origin_y) < ORIGIN_RADIUS) {
+            x = origin_x;
+            y = origin_y;
+
+            drawingState = 'preview';
+        }
+        else {
+            drawingState = 'drawing';
+        }
+
+        this.setState({
+            mousePos: {x: x, y: y},
+            drawingState: drawingState
+        })
+    }
+
+    /* =============================== RENDER =============================== */
+
+    render() {    
+        const playButtonClass = this.state.isPlaying ? "ion-stop" : "ion-play";
+        //let points = this.state.currPoints.concat([this.state.mousePos.x, this.state.mousePos.y]);
+
+        return (
+        <div>
+            <div className="controls">
+
             <div className="controls-section transport-controls">
-                <button className="transport-icon play-stop-toggle" onClick={this.handlePlayClick} title="Play project (SPACE)">
+                <button className="transport-icon play-stop-toggle" 
+                        onClick={this.handlePlayClick} 
+                        title="Play project (SPACE)">
                     <i className={playButtonClass}></i>
                 </button>
                 <button className="transport-icon record-toggle" title="Record to audio file">
@@ -113,23 +196,15 @@ class Project extends Component {
             <div className="divider"></div>
 
             <div className="controls-section music-controls">
-                
                 <span className="ctrl-elem small">
-                    <label>Tempo</label>
-                    <NumericInput 
-                      className="numeric-input" 
-                      min={1} 
-                      max={100}
-                      onChange={this.handleTempoChange}
-                      value={this.state.tempo}
-                      style={{
-                        // wrap: {
-                        //     background: '#E2E2E2',
-                        //     boxShadow: '0 0 1px 1px #fff inset, 1px 1px 5px -1px #000',
-                        //     padding: '2px 2.26ex 2px 2px',
-                        //     borderRadius: '6px 3px 3px 6px',
-                        //     fontSize: 32
-                        // },
+                <label>Tempo</label>
+                <NumericInput 
+                    className="numeric-input" 
+                    min={1} 
+                    max={100}
+                    onChange={this.handleTempoChange}
+                    value={this.state.tempo}
+                    style={{
                         input: {
                             lineHeight: '10',
                             padding: 'none'
@@ -140,9 +215,6 @@ class Project extends Component {
                         },
                         btn: {
                             boxShadow: 'none'
-                        },
-                        arrowUp: {
-                            borderColor: 'transparent transparent rgba(0, 0, 0, 0.1)',
                         },
                         btnUp: {
                             color: '#ddd',
@@ -163,123 +235,95 @@ class Project extends Component {
                             borderTopColor: 'rgba(102, 102, 102, 1)'
                         }
                     }} 
-                    />
+                />
                 </span>
                 <span className="ctrl-elem small">
                     <label>Key</label>
                     <Select
-                      searchable={false}
-                      clearable={false}
-                      name="Key Select"
-                      value={this.state.scaleObj.tonic.toString(true)}
-                      options={tonicsList}
-                      onChange={this.handleTonicChange}
+                    searchable={false}
+                    clearable={false}
+                    name="Key Select"
+                    value={this.state.scaleObj.tonic.toString(true)}
+                    options={tonicsList}
+                    onChange={this.handleTonicChange}
                     />
                 </span>
-
                 <span className="ctrl-elem large">
                     <label>Scale</label>
                     <Select
-                      color="red"
-                      searchable={false}
-                      clearable={false}
-                      name="Key Select"
-                      value={this.state.scaleObj.name}
-                      options={scalesList}
-                      onChange={this.handleScaleChange}
+                    color="red"
+                    searchable={false}
+                    clearable={false}
+                    name="Key Select"
+                    value={this.state.scaleObj.name}
+                    options={scalesList}
+                    onChange={this.handleScaleChange}
                     />
                 </span>
-
-                {/*<span className="ctrl-elem">
-                    <label>Scale:</label>
-                </span>*/}
-            </div>
-            <Shape tempo={this.state.tempo}/>
-           
-           {/* <div class="controls-section tools-controls">
-                <button class="ctrl-elem tool active" id="draw-tool" title="Draw Tool (TAB to toggle)">
-                    <div class="color-palette dropdown">
-                        <i class="ion-chevron-down"></i>
-                        <div class="dropdown-content">
-                            <div class="palette-background"></div>
-                        </div>
-                    </div>
-                        <!-- <img class="tool-icon" src="img/cursor_draw.svg"> -->
-                        <span>DRAW</span>
-                </button><!-- 
-                 --><button class="ctrl-elem tool" id="adjust-tool" title="Edit Tool (TAB to toggle)">
-                   <!--  <img class="tool-icon" src="img/cursor_edit.svg"> -->
-                   <span>EDIT</span>
-                </button>
-            </div>
-            
-            <!-- <div class="divider"></div> -->
-            <div class="controls-section grid-controls">
-                <div class="ctrl-elem">
-                    <div>
-                        <input class="checkbox" type="checkbox" name="grid" id="grid" title="Toggle Grid">
-                        <label for="grid" title="Toggle Grid">Grid</label>    
-                    </div>
-                    <div>
-                        <input class="checkbox" type="checkbox" name="snap" id="snap" title="Toggle Snap To Grid">
-                        <label for="snap" title="Toggle Snap To Grid">Snap to Grid</label>
-                    </div>
-                </div>
-                <div class="ctrl-elem">
-                    <div>
-                        <input class="checkbox" type="checkbox" name="auto-quantize" id="auto-quantize" title="Snaps shapes to the same length">
-                        <label for="auto-quantize" title="Snaps shapes to the same length">Auto-Quantize</label>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="divider"></div>
-            <div class="controls-section music-controls">
-                <span class="ctrl-elem">
-                    <label>Tempo:</label><br>
-                    <input type="range" class="tempo-slider" min="-6" max="-1">
-                </span>
-                <span class="ctrl-elem">
-                    <label>Key:</label><br>
-                    <select class="tonic-select"></select>
-                </span>
-                <span class="ctrl-elem">
-                    <label>Scale:</label><br>
-                    <select class="scale-select"></select>
-                </span>
             </div>
 
-            <div class="divider"></div>
-            <div class="controls-section canvas-controls">
-                <button class="transport-icon enter-fullscreen" title="Toggle Fullscreen">
-                    <i class="ion-arrow-expand"></i>
-                </button>
-                <button class="ctrl-elem clear" title="Clear All Shapes">Clear</button>
             </div>
-            
-           <!--  <div class="divider"></div> -->
+            <div id="holder">
+                <Stage 
+                    width={800} 
+                    height={500}
+                    onContentClick={this.handleClick}
+                    onContentMouseMove={this.handleMouseMove}>
+                    
+                    <Layer>
+                        <Group>
+                            {this.state.shapesList}
+                        </Group>    
+                    </Layer>
 
-            <!-- <div class="controls-section project-controls">
-                <button class="ctrl-elem" onclick="project_dump()">Save Project</button>
-                <button class="ctrl-elem" onclick="project_load()">Load Project</button>
-            </div> -->
+                    <Layer>
+                        <PhantomShape 
+                            mousePos={this.state.mousePos} 
+                            points={this.state.currPoints}
+                        />
+                    </Layer>
 
-            <!-- <div class="controls-section project-controls">
-                <button class="ctrl-elem" onclick="generate_random_shapes(1, 10)">Random Shape</button>
-            </div> -->*/}
-        </div>
-        <div id="holder">
-          
-        </div>  
-      </div>
-
-      
-    );
-  }
+                </Stage>
+            </div>  
+        </div>        
+      );
+    }
 }
 
 
+class PhantomShape extends Component {
+    
+    constructor (props) {
+      super(props);
 
+      this.fillColor = "#000";
+      this.radius = 5;
+      this.strokeWidth = 2;
+    }
+
+    render(){
+        return (
+            <Group>
+                <Circle 
+                    x={this.props.mousePos.x} 
+                    y={this.props.mousePos.y}
+                    radius={this.radius}
+                    fill={this.fillColor}
+                />
+                <Line
+                    points={this.props.points.concat([this.props.mousePos.x, this.props.mousePos.y])}
+                    strokeWidth={this.strokeWidth}
+                    stroke={this.fillColor}
+                />
+            </Group>
+        );
+    }
+}
 
 
 export default Project
+
+function dist(x0,y0,x1,y1) {
+    return Math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0));
+}
+

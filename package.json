@@ -4,8 +4,8 @@
   "private": true,
   "dependencies": {
     "konva": "^1.7.6",
-    "react": "^16.1.0-rc",
-    "react-dom": "^16.1.0-rc",
+    "react": "^16.1.0-beta",
+    "react-dom": "^16.1.0-beta",
     "react-ionicons": "^2.0.2",
     "react-konva": "^1.5.7-beta",
     "react-numeric-input": "^2.2.0",
