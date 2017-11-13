@@ -10,8 +10,8 @@ class Shape extends React.Component {
     constructor (props) {
         super();
         
-        const fillColor = Color(props.color).alpha(0.4);
-        const strokeColor = Color(props.color);
+        const fillColor = Color(props.color).alpha(0.4).toString();
+        const strokeColor = Color(props.color).toString();
 
         this.shapeDefaultAttrs = {
             strokeWidth: 2,
@@ -20,7 +20,7 @@ class Shape extends React.Component {
         }
 
         this.shapeHoverAttrs = {
-            strokeWidth: 3,
+            strokeWidth: 4,
             stroke: strokeColor,
             fill: fillColor
         }
@@ -46,6 +46,9 @@ class Shape extends React.Component {
         this.handleDragStart = this.handleDragStart.bind(this);    
         this.handleDragEnd = this.handleDragEnd.bind(this);    
         this.handlePortalOutsideMouseClick = this.handlePortalOutsideMouseClick.bind(this);    
+
+        this.handleDelete = this.handleDelete.bind(this);    
+
     }
     
     componentDidMount () {
@@ -80,6 +83,10 @@ class Shape extends React.Component {
         if (this.refs.editorPortal) {
             this.refs.editorPortal.closePortal();
         }
+    }
+
+    handleDelete () {
+        this.props.onDelete(this.props.index);
     }
 
     handleShapeDrag (e) {
@@ -186,6 +193,7 @@ class Shape extends React.Component {
 
                     <Portal isOpened={this.props.isSelected}> 
                         <ShapeEditorPanel
+                            index={this.props.index}
                             ref="shapeEditorPanel"
                             position={{
                                 x: this.state.editorX,
@@ -194,6 +202,7 @@ class Shape extends React.Component {
                             volume={this.state.volume}
                             onVolumeChange={this.handleVolumeChange}
                             tempo={this.props.tempo} 
+                            onDeleteClick={this.handleDelete}
                         />
                     </Portal>
 
@@ -226,11 +235,16 @@ class Shape extends React.Component {
     }
 }
 
+export default Shape
 
+
+/*
+    The shape's vertecies. Can be dragged to edit the shape.
+*/
 class ShapeVertex extends Component {
     constructor(props) {
         super(props);
-        const fillColor = (props.index === 0) ? props.color : Color(props.color).lighten(1.3)
+        const fillColor = (props.index === 0) ? props.color : Color(props.color).lighten(1.3).toString()
         
         this.defaultAttrs = {
             fill: fillColor,
@@ -283,6 +297,3 @@ class ShapeVertex extends Component {
         );
     }
 }
-
-
-export default Shape

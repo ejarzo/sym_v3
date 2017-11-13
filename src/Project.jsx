@@ -1,16 +1,27 @@
 import React, { Component } from 'react';
 
-import Teoria from 'teoria'
-import Select from 'react-select'
-import './css/react-select/react-slider-theme.css';
-import NumericInput from 'react-numeric-input'
-import "./css/ionicons.min.css"
-import ShapeCanvas from './ShapeCanvas.jsx'
+import Teoria from 'teoria';
+import Select from 'react-select';
+import NumericInput from 'react-numeric-input';
+import Toggle from 'react-toggle';
 
+import './css/react-select/react-select-theme.css';
+import './css/react-toggle/react-toggle.css';
+import "./css/ionicons.min.css";
+
+import ShapeCanvas from './ShapeCanvas.jsx';
+import drawIcon from './img/draw-icon.svg'
+import editIcon from './img/edit-icon.svg'
 
 /* ========================================================================== */
 
-const colorsList = ["#c9563c", "#f4b549", "#2a548e", "#705498", "#33936b"];
+const colorsList = [
+    "#c9563c", 
+    "#f4b549", 
+    "#2a548e", 
+    "#705498", 
+    "#33936b"
+];
 
 const tonicsList = [
   {value:"a",  label: "A"},
@@ -69,6 +80,9 @@ class Project extends Component {
         this.handleScaleChange = this.handleScaleChange.bind(this);
         
         this.toggleActiveTool = this.toggleActiveTool.bind(this);
+        this.handleDrawToolClick = this.handleDrawToolClick.bind(this);
+        this.handleEditToolClick = this.handleEditToolClick.bind(this);
+        this.handleClearButtonClick = this.handleClearButtonClick.bind(this);
         
     }
     
@@ -97,10 +111,29 @@ class Project extends Component {
     /* --- Tool ------------------------------------------------------------- */
 
     toggleActiveTool () {
-        const newTool = this.shapeCanvas.toggleActiveTool();
-        if (newTool) {
+        let newTool = 'draw'
+        if(this.shapeCanvas.canChangeTool()) {
+            if (this.state.activeTool === 'draw') {
+                newTool = 'edit';
+            }
             this.setState({
                 activeTool: newTool
+            })
+        }
+    }
+
+    handleDrawToolClick () {
+        this.setAciveTool('draw');
+    }
+
+    handleEditToolClick () {
+        this.setAciveTool('edit');
+    }
+
+    setAciveTool (tool) {
+        if(this.shapeCanvas.canChangeTool()) {
+            this.setState({
+                activeTool: tool
             })
         }
     }
@@ -124,6 +157,10 @@ class Project extends Component {
         this.setState({
             scaleObj: tonic.scale(val.value),
         })
+    }
+
+    handleClearButtonClick () {
+        this.shapeCanvas.clearAll();
     }
 
     /* --- Keyboard Shortcuts ----------------------------------------------- */
@@ -155,6 +192,45 @@ class Project extends Component {
                         </button>
                     </div>
 
+                    <div className="divider"></div>
+                    
+                    <div className="controls-section">
+                   {/* <span className="ctrl-elem large">
+                        <label>Color</label>
+                        <Select
+                        searchable={false}
+                        clearable={false}
+                        name="Key Select"
+                        value={0}
+                        options={[0,1,2,3,4]}
+                        onChange={this.handleTonicChange}
+                        />
+                    </span>*/}
+                        <span
+                            className={"tool-button " + (this.state.activeTool === 'draw' ? "selected" : "")}
+                            onClick={this.handleDrawToolClick}
+                            style={{marginRight: '5px'}}
+                            title="Draw Tool (TAB to toggle)"
+                        >
+                            <img src={drawIcon} alt="draw tool"/>
+                        </span>
+                        <span 
+                            className={"tool-button " + (this.state.activeTool === 'edit' ? "selected" : "")}
+                            onClick={this.handleEditToolClick}
+                            title="Edit Tool (TAB to toggle)"
+                        >
+                            <img src={editIcon} alt="edit tool"/>
+                        </span>
+                        {/*<Toggle
+                            checked={this.state.activeTool == 'draw'}
+                            icons={{
+                              checked: "DRAW",
+                              unchecked: "EDIT",
+                            }}
+                            onChange={this.toggleActiveTool} 
+                        />*/}
+                        
+                    </div>
                     <div className="divider"></div>
 
                     <div className="controls-section music-controls">
@@ -222,6 +298,13 @@ class Project extends Component {
                             onChange={this.handleScaleChange}
                             />
                         </span>
+                    </div>
+                    <div className="divider"></div>
+
+                    <div className="controls-section canvas-controls">
+                        <button onClick={this.handleClearButtonClick}>
+                            Clear
+                        </button>
                     </div>
                 </div>
 

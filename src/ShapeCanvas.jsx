@@ -1,14 +1,11 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import Color from 'color';
 import {Stage, Layer, Line, Circle, Group} from 'react-konva';
 import Shape from './Shape.jsx'
 
-
-/* ========================================================================== */
-
-/* ========================================================================== */
-
+/*
+    The ShapeCanvas is canvas where the shapes are drawn
+*/
 class ShapeCanvas extends Component {
   
     constructor(props) {
@@ -16,21 +13,23 @@ class ShapeCanvas extends Component {
 
         this.state = {
             shapesList: [],
-            instColors: [],
-            
+            deletedShapeIndeces: [],
+            selectedShapeIndex: -1,
+
+            currPoints: [],
             drawingState: 'pending',
             mousePos: {x: 0, y: 0},
-            currPoints: [],
-
-            selectedShapeIndex: -1
         }
+        
+        this.originLockRadius = 15;
 
-        this.shapeRefs = [];
         this.handleClick = this.handleClick.bind(this);
-
         this.handleMouseMove = this.handleMouseMove.bind(this);
         this.handleMouseDown = this.handleMouseDown.bind(this);
         this.handleShapeClick = this.handleShapeClick.bind(this);
+        this.handleShapeDelete = this.handleShapeDelete.bind(this);
+        
+        this.clearAll = this.clearAll.bind(this);
     }
        
     appendShape() {
@@ -38,27 +37,29 @@ class ShapeCanvas extends Component {
         const points = this.state.currPoints.slice();
         shapesList.push(points);
         
+        let deletedShapeIndeces = this.state.deletedShapeIndeces.slice();
+        deletedShapeIndeces.push(0);
+
         this.setState({
             shapesList: shapesList,
+            deletedShapeIndeces: deletedShapeIndeces,
             currPoints: []
         })
     }
 
-    toggleActiveTool () {
-        // only change if not in the middle of a shape
-        if(this.state.drawingState === 'pending') {
-            let newTool = 'draw';
-            if (this.props.activeTool === 'draw') {
-                newTool = 'edit';
-            }
-            return newTool;
-        }
+    canChangeTool () {
+        return this.state.drawingState === 'pending';
     }
 
+    clearAll () {
+        this.setState({
+            shapesList: [],
+            deletedShapeIndeces: []
+        })
+    }
     /* ============================== HANDLERS ============================== */
         
     handleMouseDown () {
-        console.log("MOUSE DOWN")
         this.setState({
             selectedShapeIndex: -1
         })
@@ -87,18 +88,15 @@ class ShapeCanvas extends Component {
     handleMouseMove (e) {
         let x = e.evt.offsetX;
         let y = e.evt.offsetY;
-        const origin_x = this.state.currPoints[0];
-        const origin_y = this.state.currPoints[1];
-        
-        const ORIGIN_RADIUS = 15;
+        const originX = this.state.currPoints[0];
+        const originY = this.state.currPoints[1];
         
         let drawingState = this.state.drawingState === 'pending' ? 'pending' : 'drawing';
 
-        // snap to origin
-        if (this.state.currPoints.length > 2 && dist(x, y, origin_x, origin_y) < ORIGIN_RADIUS) {
-            x = origin_x;
-            y = origin_y;
-
+        // snap to origin if within radius
+        if (this.state.currPoints.length > 2 && dist(x, y, originX, originY) < this.originLockRadius) {
+            x = originX;
+            y = originY;
             drawingState = 'preview';
         }
 
@@ -109,12 +107,19 @@ class ShapeCanvas extends Component {
     }
 
     handleShapeClick (index) {
-        console.log("shape clicked")
         this.setState({
             selectedShapeIndex: index
         })
     }
 
+    handleShapeDelete (index) {
+        let deletedShapeIndeces = this.state.deletedShapeIndeces.slice();
+        deletedShapeIndeces[index] = true;
+       
+        this.setState({
+            deletedShapeIndeces: deletedShapeIndeces
+        });
+    }
     /* =============================== RENDER =============================== */
 
     render() {    
@@ -130,20 +135,24 @@ class ShapeCanvas extends Component {
                     <Layer>
                         <Group>
                             {this.state.shapesList.map((points, index) => {
-                                return (
-                                    <Shape
-                                        isSelected={index === this.state.selectedShapeIndex}
-                                        handleShapeClick={this.handleShapeClick}
-                                        key={index}
-                                        index={index}
-                                        ref="shape"
-                                        tempo={this.props.tempo} 
-                                        points={points}
-                                        activeTool={this.props.activeTool}
-                                        color={this.props.activeColor}
-                                        setEditorPanel={this.setEditorPanel}
-                                    />  
-                                );
+                                if (!this.state.deletedShapeIndeces[index]) {
+                                    return (
+                                        <Shape
+                                            isSelected={index === this.state.selectedShapeIndex}
+                                            handleShapeClick={this.handleShapeClick}
+                                            key={index}
+                                            index={index}
+                                            ref="shape"
+                                            tempo={this.props.tempo} 
+                                            points={points}
+                                            activeTool={this.props.activeTool}
+                                            color={this.props.activeColor}
+                                            onDelete={this.handleShapeDelete}
+                                        />  
+                                    );
+                                } else {
+                                    return null;
+                                }
                             })}
                         </Group>    
                     </Layer>
@@ -158,15 +167,23 @@ class ShapeCanvas extends Component {
                         />
                     </Layer>
                 </Stage>
+                {/*<div id="monitor">
+                    {this.state.shapesList.map((points, index) => {
+                        return (
+                           <div>
+                               Shape: {index} <br/>
+                               Points: {points.map((p) => p + ",")} <br/>
+                           </div>
+                        );
+                    })}
+                </div>*/}
             </div>  
         );
     }
 }
 
 /*
-    Used to show where the user's next point/line will fall. Shows the shape
-    that is currently being drawn. A faint fill apears to indicate that the 
-    the shape will be completed upon the next click.
+    Used to show the shape that is currently being drawn. 
 */
 class PhantomShape extends Component {
     constructor (props) {
@@ -180,7 +197,7 @@ class PhantomShape extends Component {
     render(){
         let originPoint = null;
         if (this.props.points[0]) {
-            originPoint = (<Circle // first points drawn
+            originPoint = (<Circle // first point drawn
                 x={this.props.points[0]} 
                 y={this.props.points[1]}
                 radius={this.radius}
@@ -197,7 +214,7 @@ class PhantomShape extends Component {
                         x={this.props.mousePos.x} 
                         y={this.props.mousePos.y}
                         radius={this.radius}
-                        fill={Color(this.props.color).alpha(0.4)}
+                        fill={Color(this.props.color).alpha(0.4).toString()}
                         stroke={this.props.color}
                         strokeWidth={this.strokeWidth}
                     />
@@ -206,7 +223,7 @@ class PhantomShape extends Component {
                         points={this.props.points}
                         strokeWidth={this.strokeWidth}
                         stroke={this.props.color}
-                        fill={Color(this.props.color).alpha(this.previewFillOpacity)}
+                        fill={Color(this.props.color).alpha(this.previewFillOpacity).toString()}
                         fillEnabled={true}
                         closed={this.props.drawingState === 'preview'}
                     />

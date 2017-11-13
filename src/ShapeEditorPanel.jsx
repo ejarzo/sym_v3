@@ -64,10 +64,6 @@ class ShapeEditorPanel extends Component {
         this.handleOverlayClick = this.handleOverlayClick.bind(this);
     }
 
-    componentWillRecieveProps(newProps) {
-
-    }
-
     handleOverlayClick () {
         this.props.closePortal();
     }
@@ -76,6 +72,9 @@ class ShapeEditorPanel extends Component {
         const editorArrowClass = this.state.editorArrowIsLeft ? "arrow-left" : "arrow-right"
         return(    
             <div className="shape-editor-panel" style={this.divStyle}>
+                <div>
+                    Shape: {this.props.index}
+                </div>
                 <Slider
                     orientation='vertical'
                     min={-18}
@@ -89,7 +88,9 @@ class ShapeEditorPanel extends Component {
                 <div>
                     Tempo: {this.props.tempo}
                 </div>
-                
+                <button onClick={this.props.onDeleteClick}>
+                    Delete
+                </button>
                 <div className={"tooltip-arrow " + editorArrowClass} style={this.arrowStyle}></div>
             </div>
         );
