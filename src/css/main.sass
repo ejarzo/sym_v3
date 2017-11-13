@@ -232,16 +232,26 @@ ul
                 padding: 0
 
 
+.shape-editor-background
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
 
 .shape-editor-panel
     @include drop_shadow
-    width: 225px
     background-color: $color-white
     position: absolute
     left: 100px
     top: 100px
     padding: 5px 15px
-
+    
+    //width: 100%
+    //height: 100%
+    
+    .rangeslider__labels
+        display: none !important
     .color-palette
         color: $color-white
         text-align: center

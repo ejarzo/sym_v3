@@ -1,15 +1,16 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 
 import Teoria from 'teoria'
 import Select from 'react-select'
 import './css/react-select/react-slider-theme.css';
 import NumericInput from 'react-numeric-input'
 import "./css/ionicons.min.css"
-import Shape from './Shape.jsx'
-import {Stage, Layer, Line, Circle, Group} from 'react-konva';
+import ShapeCanvas from './ShapeCanvas.jsx'
+
 
 /* ========================================================================== */
+
+const colorsList = ["#c9563c", "#f4b549", "#2a548e", "#705498", "#33936b"];
 
 const tonicsList = [
   {value:"a",  label: "A"},
@@ -56,69 +57,63 @@ class Project extends Component {
             name: props.initState.name,
             tempo: props.initState.tempo,
             scaleObj: Teoria.note(props.initState.tonic).scale(props.initState.scale),
-            //rootNote: scaleObj.tonic.name(),
-            synthControllersList: [],
-            shapesList: [],
-            instColors: [],
-            quantizeLength: 700,
             
-            drawingState: 'drawing',
-            mousePos: {x: 0, y: 0},
-            currPoints: [],
             isPlaying: false,
+            activeTool: 'draw',
+            activeColor: colorsList[0],
         }
 
-        this.handlePlayClick = this.handlePlayClick.bind(this)
-        this.handleTempoChange = this.handleTempoChange.bind(this)
-        this.handleTonicChange = this.handleTonicChange.bind(this)
-        this.handleScaleChange = this.handleScaleChange.bind(this)
+        this.handlePlayClick = this.handlePlayClick.bind(this);
+        this.handleTempoChange = this.handleTempoChange.bind(this);
+        this.handleTonicChange = this.handleTonicChange.bind(this);
+        this.handleScaleChange = this.handleScaleChange.bind(this);
         
-        this.handleClick = this.handleClick.bind(this)
-        this.handleMouseMove = this.handleMouseMove.bind(this)
-        
-        this.testEl;
+        this.toggleActiveTool = this.toggleActiveTool.bind(this);
         
     }
     
-    componentDidMount() {
-      
+    componentWillMount(){
+        document.addEventListener("keydown", this.handleKeyDown.bind(this));
     }
 
-    appendShape() {
-        let shapesList = this.state.shapesList.slice();
-        console.log(this.state.shapesList);
-        const points = this.state.currPoints.slice();
-        
-        const newShape = <Shape ref={el => this.testEl = el}
-                            tempo={this.state.tempo} 
-                            points={this.state.currPoints} 
-                            //isCompleted={this.state.currShapeIsCompleted} 
-                            />
-        
-        
+    componentDidMount () {
+        console.log(document.getElementById("holder").style.width)
+    }
 
-        shapesList.push(newShape);
-        
-        this.setState({
-            shapesList: shapesList,
-            currPoints: []
-        })
+    componentWillUnmount() {
+        document.removeEventListener("keydown", this.handleKeyDown.bind(this));
     }
 
     /* ============================== HANDLERS ============================== */
+    
+    /* --- Transport -------------------------------------------------------- */
+
     handlePlayClick () {
         this.setState((prevState) => ({
             isPlaying: !prevState.isPlaying
         }));
     }
     
+    /* --- Tool ------------------------------------------------------------- */
+
+    toggleActiveTool () {
+        const newTool = this.shapeCanvas.toggleActiveTool();
+        if (newTool) {
+            this.setState({
+                activeTool: newTool
+            })
+        }
+    }
+
+    /* --- Musical ---------------------------------------------------------- */
+
     handleTempoChange (val) {
         this.setState({
             tempo: val
         })
     }
 
-    handleTonicChange (val){
+    handleTonicChange (val) {
         this.setState((prevState) => ({
             scaleObj: Teoria.note(val.value).scale(prevState.scaleObj.name),
         }));
@@ -131,199 +126,114 @@ class Project extends Component {
         })
     }
 
-    handleClick (e) {
-        // hovering over first point
-        if (this.state.drawingState === 'preview') {
-            this.appendShape();
-        } else {
-            let newPoints = this.state.currPoints.slice();
-            console.log(newPoints)
-            newPoints.push(this.state.mousePos.x, this.state.mousePos.y);
-            this.setState({
-                currPoints: newPoints
-            })
+    /* --- Keyboard Shortcuts ----------------------------------------------- */
+
+    handleKeyDown(event) {
+        console.log(event.key);
+        if(event.key === 'Tab') {
+            event.preventDefault();
+            this.toggleActiveTool();
         }
-    }
-
-    handleMouseMove (e) {
-        let x = e.evt.offsetX;
-        let y = e.evt.offsetY;
-        const origin_x = this.state.currPoints[0];
-        const origin_y = this.state.currPoints[1];
-        
-        const ORIGIN_RADIUS = 15;
-        
-        let drawingState = this.state.drawingState;
-
-        // snap to origin
-        if (this.state.currPoints.length && dist(x,y,origin_x,origin_y) < ORIGIN_RADIUS) {
-            x = origin_x;
-            y = origin_y;
-
-            drawingState = 'preview';
-        }
-        else {
-            drawingState = 'drawing';
-        }
-
-        this.setState({
-            mousePos: {x: x, y: y},
-            drawingState: drawingState
-        })
     }
 
     /* =============================== RENDER =============================== */
 
     render() {    
         const playButtonClass = this.state.isPlaying ? "ion-stop" : "ion-play";
-        //let points = this.state.currPoints.concat([this.state.mousePos.x, this.state.mousePos.y]);
 
         return (
-        <div>
-            <div className="controls">
+            <div>
+                <div className="controls">
+                    <div className="controls-section transport-controls">
+                        <button className="transport-icon play-stop-toggle" 
+                                onClick={this.handlePlayClick} 
+                                title="Play project (SPACE)">
+                            <i className={playButtonClass}></i>
+                        </button>
+                        <button className="transport-icon record-toggle" title="Record to audio file">
+                            <i className="ion-record"></i>
+                        </button>
+                    </div>
 
-            <div className="controls-section transport-controls">
-                <button className="transport-icon play-stop-toggle" 
-                        onClick={this.handlePlayClick} 
-                        title="Play project (SPACE)">
-                    <i className={playButtonClass}></i>
-                </button>
-                <button className="transport-icon record-toggle" title="Record to audio file">
-                    <i className="ion-record"></i>
-                </button>
-            </div>
+                    <div className="divider"></div>
 
-            <div className="divider"></div>
-
-            <div className="controls-section music-controls">
-                <span className="ctrl-elem small">
-                <label>Tempo</label>
-                <NumericInput 
-                    className="numeric-input" 
-                    min={1} 
-                    max={100}
-                    onChange={this.handleTempoChange}
-                    value={this.state.tempo}
-                    style={{
-                        input: {
-                            lineHeight: '10',
-                            padding: 'none'
-                        },
-                        'input:focus' : {
-                            border: '1px inset #222',
-                            outline: 'none'
-                        },
-                        btn: {
-                            boxShadow: 'none'
-                        },
-                        btnUp: {
-                            color: '#ddd',
-                            borderRadius: 'none',
-                            background: 'none',
-                            border: 'none',
-                        },
-                        btnDown: {
-                            color: '#ddd',
-                            borderRadius: 'none',
-                            background: 'none',
-                            border: 'none',
-                        },
-                        arrowUp: {
-                            borderBottomColor: 'rgba(102, 102, 102, 1)'
-                        },
-                        arrowDown: {
-                            borderTopColor: 'rgba(102, 102, 102, 1)'
-                        }
-                    }} 
-                />
-                </span>
-                <span className="ctrl-elem small">
-                    <label>Key</label>
-                    <Select
-                    searchable={false}
-                    clearable={false}
-                    name="Key Select"
-                    value={this.state.scaleObj.tonic.toString(true)}
-                    options={tonicsList}
-                    onChange={this.handleTonicChange}
-                    />
-                </span>
-                <span className="ctrl-elem large">
-                    <label>Scale</label>
-                    <Select
-                    color="red"
-                    searchable={false}
-                    clearable={false}
-                    name="Key Select"
-                    value={this.state.scaleObj.name}
-                    options={scalesList}
-                    onChange={this.handleScaleChange}
-                    />
-                </span>
-            </div>
-
-            </div>
-            <div id="holder">
-                <Stage 
-                    width={800} 
-                    height={500}
-                    onContentClick={this.handleClick}
-                    onContentMouseMove={this.handleMouseMove}>
-                    
-                    <Layer>
-                        <Group>
-                            {this.state.shapesList}
-                        </Group>    
-                    </Layer>
-
-                    <Layer>
-                        <PhantomShape 
-                            mousePos={this.state.mousePos} 
-                            points={this.state.currPoints}
+                    <div className="controls-section music-controls">
+                        <span className="ctrl-elem small">
+                        <label>Tempo</label>
+                        <NumericInput 
+                            className="numeric-input" 
+                            min={1} 
+                            max={100}
+                            onChange={this.handleTempoChange}
+                            value={this.state.tempo}
+                            style={{
+                                input: {
+                                    lineHeight: '10',
+                                    padding: 'none'
+                                },
+                                'input:focus' : {
+                                    border: '1px inset #222',
+                                    outline: 'none'
+                                },
+                                btn: {
+                                    boxShadow: 'none'
+                                },
+                                btnUp: {
+                                    color: '#ddd',
+                                    borderRadius: 'none',
+                                    background: 'none',
+                                    border: 'none',
+                                },
+                                btnDown: {
+                                    color: '#ddd',
+                                    borderRadius: 'none',
+                                    background: 'none',
+                                    border: 'none',
+                                },
+                                arrowUp: {
+                                    borderBottomColor: 'rgba(102, 102, 102, 1)'
+                                },
+                                arrowDown: {
+                                    borderTopColor: 'rgba(102, 102, 102, 1)'
+                                }
+                            }} 
                         />
-                    </Layer>
+                        </span>
+                        <span className="ctrl-elem small">
+                            <label>Key</label>
+                            <Select
+                            searchable={false}
+                            clearable={false}
+                            name="Key Select"
+                            value={this.state.scaleObj.tonic.toString(true)}
+                            options={tonicsList}
+                            onChange={this.handleTonicChange}
+                            />
+                        </span>
+                        <span className="ctrl-elem large">
+                            <label>Scale</label>
+                            <Select
+                            color="red"
+                            searchable={false}
+                            clearable={false}
+                            name="Key Select"
+                            value={this.state.scaleObj.name}
+                            options={scalesList}
+                            onChange={this.handleScaleChange}
+                            />
+                        </span>
+                    </div>
+                </div>
 
-                </Stage>
-            </div>  
-        </div>        
-      );
-    }
-}
-
-
-class PhantomShape extends Component {
-    
-    constructor (props) {
-      super(props);
-
-      this.fillColor = "#000";
-      this.radius = 5;
-      this.strokeWidth = 2;
-    }
-
-    render(){
-        return (
-            <Group>
-                <Circle 
-                    x={this.props.mousePos.x} 
-                    y={this.props.mousePos.y}
-                    radius={this.radius}
-                    fill={this.fillColor}
+                <ShapeCanvas 
+                    ref={(c) => this.shapeCanvas = c}
+                    activeTool={this.state.activeTool}
+                    activeColor={this.state.activeColor}
+                    tempo={this.state.tempo}
                 />
-                <Line
-                    points={this.props.points.concat([this.props.mousePos.x, this.props.mousePos.y])}
-                    strokeWidth={this.strokeWidth}
-                    stroke={this.fillColor}
-                />
-            </Group>
+            </div>        
         );
     }
 }
 
-
 export default Project
-
-function dist(x0,y0,x1,y1) {
-    return Math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0));
-}
-
