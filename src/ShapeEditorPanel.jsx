@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Select from 'react-select'
 
 // sliders
 import Slider from 'react-rangeslider'
@@ -15,7 +16,7 @@ class ShapeEditorPanel extends Component {
         super(props);
 
         const width = 225;
-        const height = 250;
+        const height = 350;
         const xPad = 23;
         const yPad = 33;
 
@@ -37,8 +38,8 @@ class ShapeEditorPanel extends Component {
             // arrow on left
         }
         
-        if (y + height > window.innerHeight + 40) {
-            y = window.innerHeight - height;
+        if (y + height > window.innerHeight) {
+            y = window.innerHeight - height - 15;
             arrowTop = this.props.position.y - y + 70;
             if (arrowTop > height - 20) {
                 arrowTop = height - 20
@@ -75,6 +76,23 @@ class ShapeEditorPanel extends Component {
                 <div>
                     Shape: {this.props.index}
                 </div>
+                <span className="ctrl-elem small">
+                    <label>Color</label>
+                    <Select
+                    searchable={false}
+                    clearable={false}
+                    name="Color Select"
+                    value={this.props.colorIndex}
+                    options={[
+                            {value: 0, label: 0},
+                            {value: 1, label: 1},
+                            {value: 2, label: 2},
+                            {value: 3, label: 3},
+                            {value: 4, label: 4},
+                        ]}
+                    onChange={this.props.onColorChange}
+                    />
+                </span>
                 <Slider
                     orientation='vertical'
                     min={-18}

@@ -16,11 +16,11 @@ import editIcon from './img/edit-icon.svg'
 /* ========================================================================== */
 
 const colorsList = [
-    "#c9563c", 
-    "#f4b549", 
-    "#2a548e", 
-    "#705498", 
-    "#33936b"
+    "#c9563c", // red
+    "#f4b549", // yellow
+    "#2a548e", // blue
+    "#705498", // purple
+    "#33936b"  // green
 ];
 
 const tonicsList = [
@@ -71,9 +71,12 @@ class Project extends Component {
             
             isPlaying: false,
             activeTool: 'draw',
-            activeColor: colorsList[0],
+            //activeColor: colorsList[0],
+            activeColorIndex: 0
         }
 
+        this.activeColor = colorsList[this.state.activeColorIndex];
+        
         this.handlePlayClick = this.handlePlayClick.bind(this);
         this.handleTempoChange = this.handleTempoChange.bind(this);
         this.handleTonicChange = this.handleTonicChange.bind(this);
@@ -82,6 +85,7 @@ class Project extends Component {
         this.toggleActiveTool = this.toggleActiveTool.bind(this);
         this.handleDrawToolClick = this.handleDrawToolClick.bind(this);
         this.handleEditToolClick = this.handleEditToolClick.bind(this);
+        this.handleColorChange = this.handleColorChange.bind(this);
         this.handleClearButtonClick = this.handleClearButtonClick.bind(this);
         
     }
@@ -137,7 +141,14 @@ class Project extends Component {
             })
         }
     }
-
+    
+    handleColorChange (val) {
+        console.log(val.value);
+        this.setState({
+            activeColorIndex: val.value
+        })
+    }
+    
     /* --- Musical ---------------------------------------------------------- */
 
     handleTempoChange (val) {
@@ -195,17 +206,23 @@ class Project extends Component {
                     <div className="divider"></div>
                     
                     <div className="controls-section">
-                   {/* <span className="ctrl-elem large">
+                    <span className="ctrl-elem small">
                         <label>Color</label>
                         <Select
                         searchable={false}
                         clearable={false}
                         name="Key Select"
-                        value={0}
-                        options={[0,1,2,3,4]}
-                        onChange={this.handleTonicChange}
+                        value={this.state.activeColorIndex}
+                        options={[
+                                {value: 0, label: 0},
+                                {value: 1, label: 1},
+                                {value: 2, label: 2},
+                                {value: 3, label: 3},
+                                {value: 4, label: 4},
+                            ]}
+                        onChange={this.handleColorChange}
                         />
-                    </span>*/}
+                    </span>
                         <span
                             className={"tool-button " + (this.state.activeTool === 'draw' ? "selected" : "")}
                             onClick={this.handleDrawToolClick}
@@ -308,10 +325,11 @@ class Project extends Component {
                     </div>
                 </div>
 
-                <ShapeCanvas 
+                <ShapeCanvas
                     ref={(c) => this.shapeCanvas = c}
+                    colorsList={colorsList}
+                    colorIndex={this.state.activeColorIndex}
                     activeTool={this.state.activeTool}
-                    activeColor={this.state.activeColor}
                     tempo={this.state.tempo}
                 />
             </div>        

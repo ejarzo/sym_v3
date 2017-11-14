@@ -10,8 +10,10 @@ class Shape extends React.Component {
     constructor (props) {
         super();
         
-        const fillColor = Color(props.color).alpha(0.4).toString();
-        const strokeColor = Color(props.color).toString();
+        const color = props.colorsList[props.colorIndex];
+        
+        const fillColor = Color(color).alpha(0.4).toString();
+        const strokeColor = Color(color).toString();
 
         this.shapeDefaultAttrs = {
             strokeWidth: 2,
@@ -29,7 +31,7 @@ class Shape extends React.Component {
             volume: -5,
             points: props.points,
             attrs: this.shapeDefaultAttrs,
-
+            colorIndex: props.colorIndex,
             editorX: 0,
             editorY: 0,
             editorOpen: false
@@ -41,6 +43,7 @@ class Shape extends React.Component {
         this.handleMouseOut = this.handleMouseOut.bind(this)
         this.handleVertexDragMove = this.handleVertexDragMove.bind(this);
         this.handleShapeDrag = this.handleShapeDrag.bind(this);    
+        this.handleColorChange = this.handleColorChange.bind(this);    
         
         this.handleMouseDown = this.handleMouseDown.bind(this);    
         this.handleDragStart = this.handleDragStart.bind(this);    
@@ -48,7 +51,7 @@ class Shape extends React.Component {
         this.handlePortalOutsideMouseClick = this.handlePortalOutsideMouseClick.bind(this);    
 
         this.handleDelete = this.handleDelete.bind(this);    
-
+        this.handleDelete = this.handleDelete.bind(this);
     }
     
     componentDidMount () {
@@ -56,12 +59,10 @@ class Shape extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.activeTool === 'draw') {
-            this.setState({
-                attrs: this.shapeDefaultAttrs
-            })
+            
+
         }
-    }
+
 
     /* ============================== HANDLERS ============================== */
 
@@ -75,8 +76,7 @@ class Shape extends React.Component {
     }
 
     handleShapeClick (e) {
-        console.log(this.props.index)
-        this.props.handleShapeClick(this.props.index);
+        this.props.onShapeClick(this.props.index);
     }
 
     hideEditorPanel () {
@@ -135,6 +135,30 @@ class Shape extends React.Component {
         console.log("outside mouse click")
     }
 
+    handleColorChange (val) {
+        const color = this.props.colorsList[val.value];
+        
+        const fillColor = Color(color).alpha(0.4).toString();
+        const strokeColor = Color(color).toString();
+
+        this.shapeDefaultAttrs = {
+            strokeWidth: 2,
+            stroke: strokeColor,
+            fill: fillColor
+        }
+
+        this.shapeHoverAttrs = {
+            strokeWidth: 4,
+            stroke: strokeColor,
+            fill: fillColor
+        }
+        
+        this.setState({
+            attrs: this.shapeDefaultAttrs,
+            colorIndex: val.value
+        })
+
+    }
     /* --- Vertecies -------------------------------------------------------- */
 
     handleVertexDragMove(i) {
@@ -183,7 +207,7 @@ class Shape extends React.Component {
                                     key={i}
                                     p={{x: p, y: arr[i+1]}}
                                     onVertexDragMove={this.handleVertexDragMove(i)}
-                                    color={this.props.color}
+                                    color={this.props.colorsList[this.state.colorIndex]}
                                     index={i}
                                 />);
                         } else {
@@ -203,6 +227,8 @@ class Shape extends React.Component {
                             onVolumeChange={this.handleVolumeChange}
                             tempo={this.props.tempo} 
                             onDeleteClick={this.handleDelete}
+                            colorIndex={this.state.colorIndex}
+                            onColorChange={this.handleColorChange}
                         />
                     </Portal>
 
@@ -210,6 +236,7 @@ class Shape extends React.Component {
 
             );
         } else {
+            // if not in edit mode, show only the origin point
             return (   
                 <Group 
                     draggable={false}
@@ -223,10 +250,10 @@ class Shape extends React.Component {
                         closed={true}
                     />
                     <ShapeVertex 
+                        index={0}
+                        color={this.props.colorsList[this.state.colorIndex]}
                         p={{x: this.state.points[0], y: this.state.points[1]}}
                         onVertexDragMove={this.handleVertexDragMove(0)}
-                        color={this.props.color}
-                        index={0}
                     />
                 </Group>
             );
@@ -244,24 +271,17 @@ export default Shape
 class ShapeVertex extends Component {
     constructor(props) {
         super(props);
-        const fillColor = (props.index === 0) ? props.color : Color(props.color).lighten(1.3).toString()
-        
-        this.defaultAttrs = {
-            fill: fillColor,
-            radius: 4,
-            stroke: props.color,
-            strokeWidth: 2
-        }
 
-        this.hoverAttrs = {
-            fill: fillColor,
-            radius: 6,
-            stroke: props.color,
-            strokeWidth: 2
-        }
+        const luminosity = Color(props.color).luminosity();
+        this.lightenAmount = 1.8 * (1-luminosity);
+        
+        this.defaultRadius = 4;
+        this.hoverRadius = 6;
+        this.strokeWidth = 2;
 
         this.state = {
-            attrs: this.defaultAttrs
+            radius: this.defaultRadius,
+            color: props.color
         }
 
         this.handleMouseOver = this.handleMouseOver.bind(this)
@@ -270,25 +290,28 @@ class ShapeVertex extends Component {
 
     handleMouseOver () {
         this.setState({
-            attrs: this.hoverAttrs
+            radius: this.hoverRadius
         })
     }
 
     handleMouseOut () {
         this.setState({
-            attrs: this.defaultAttrs
+            radius: this.defaultRadius
         })
     }
 
     render () {
+        // solid if first node, pale fill if not
+        const fillColor = (this.props.index === 0) ? this.props.color : Color(this.props.color).lighten(this.lightenAmount).toString()
+
         return (
             <Circle 
                 x={this.props.p.x}
                 y={this.props.p.y}
-                radius={this.state.attrs.radius}
-                fill={this.state.attrs.fill}
-                stroke={this.state.attrs.stroke}
-                strokeWidth={this.state.attrs.strokeWidth}
+                radius={this.state.radius}
+                fill={fillColor}
+                stroke={this.props.color}
+                strokeWidth={this.strokeWidth}
                 draggable={true}
                 onDragMove={this.props.onVertexDragMove}
                 onMouseOver={this.handleMouseOver}

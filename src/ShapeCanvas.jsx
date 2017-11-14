@@ -138,16 +138,19 @@ class ShapeCanvas extends Component {
                                 if (!this.state.deletedShapeIndeces[index]) {
                                     return (
                                         <Shape
-                                            isSelected={index === this.state.selectedShapeIndex}
-                                            handleShapeClick={this.handleShapeClick}
                                             key={index}
                                             index={index}
-                                            ref="shape"
-                                            tempo={this.props.tempo} 
                                             points={points}
+
+                                            isSelected={index === this.state.selectedShapeIndex}
                                             activeTool={this.props.activeTool}
-                                            color={this.props.activeColor}
+
+                                            colorsList={this.props.colorsList}
+                                            colorIndex={this.props.colorIndex}
+
+                                            onShapeClick={this.handleShapeClick}
                                             onDelete={this.handleShapeDelete}
+                                            tempo={this.props.tempo} 
                                         />  
                                     );
                                 } else {
@@ -162,7 +165,7 @@ class ShapeCanvas extends Component {
                             mousePos={this.state.mousePos} 
                             points={this.state.currPoints}
                             activeTool={this.props.activeTool}
-                            color={this.props.activeColor}
+                            color={this.props.colorsList[this.props.colorIndex]}
                             drawingState={this.state.drawingState}
                         />
                     </Layer>
