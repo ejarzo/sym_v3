@@ -41,6 +41,35 @@ ul {
   ul li {
     font-size: 12px; }
 
+/* checkbox buttons */
+input[type=checkbox] {
+  position: absolute;
+  top: -9999px;
+  left: -9999px; }
+  input[type=checkbox]:checked + .checkbox-label {
+    background: #444;
+    color: #eee; }
+
+label.checkbox-label, button {
+  border-radius: 1px;
+  text-align: center;
+  width: 100%;
+  color: #444;
+  background: #eee;
+  border: 1px solid #e1e1e1;
+  display: inline-block;
+  cursor: pointer;
+  margin-bottom: 10px;
+  height: 25px;
+  padding: 2px 7px; }
+
+label.checkbox-label {
+  background: #fff;
+  border-color: #bbb; }
+
+button:active {
+  background: #d5d5d5; }
+
 ::-moz-selection {
   background: #b3d4fc;
   text-shadow: none; }
@@ -90,23 +119,114 @@ ul {
     margin: 0;
     vertical-align: top;
     height: 40px; }
+    .controls .controls-section.transport-controls button {
+      background: none;
+      border: none;
+      transition: all 0.1s ease-in-out;
+      color: #777;
+      transform: scaleX(1) scaleY(1) scaleZ(1);
+      position: relative;
+      z-index: 100;
+      color: #444;
+      font-size: 1.8em;
+      width: 40px;
+      height: 100%; }
+      .controls .controls-section.transport-controls button:hover {
+        transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+        color: #222;
+        z-index: 500; }
+      .controls .controls-section.transport-controls button:active {
+        transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+        color: #222; }
+      .controls .controls-section.transport-controls button:disabled {
+        color: #bbb; }
+        .controls .controls-section.transport-controls button:disabled:hover {
+          color: #bbb;
+          transform: scaleX(1) scaleY(1) scaleZ(1); }
+      .controls .controls-section.transport-controls button i {
+        position: relative;
+        top: 1px; }
+  .controls .project-color-picker {
+    position: relative;
+    top: 5px;
+    width: 30px;
+    height: 30px; }
+    .controls .project-color-picker .color-picker-button {
+      position: absolute;
+      background: #ddd;
+      border-radius: 3px;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      transition: all 0.1s ease-in-out;
+      color: #777;
+      transform: scaleX(1) scaleY(1) scaleZ(1);
+      position: relative;
+      z-index: 100; }
+      .controls .project-color-picker .color-picker-button:hover {
+        transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+        color: #222;
+        z-index: 500; }
+      .controls .project-color-picker .color-picker-button:active {
+        transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+        color: #222; }
+      .controls .project-color-picker .color-picker-button:disabled {
+        color: #bbb; }
+        .controls .project-color-picker .color-picker-button:disabled:hover {
+          color: #bbb;
+          transform: scaleX(1) scaleY(1) scaleZ(1); }
+    .controls .project-color-picker .project-color-picker-options {
+      position: relative;
+      z-index: 50;
+      top: 10px;
+      background: #fff;
+      text-align: center; }
+      .controls .project-color-picker .project-color-picker-options .color-option {
+        cursor: pointer;
+        border-radius: 2px;
+        display: inline-block;
+        transition: all 0.1s ease-in-out;
+        color: #777;
+        transform: scaleX(1) scaleY(1) scaleZ(1);
+        position: relative;
+        z-index: 100;
+        width: 20px;
+        height: 20px; }
+        .controls .project-color-picker .project-color-picker-options .color-option:hover {
+          transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+          color: #222;
+          z-index: 500; }
+        .controls .project-color-picker .project-color-picker-options .color-option:active {
+          transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+          color: #222; }
+        .controls .project-color-picker .project-color-picker-options .color-option:disabled {
+          color: #bbb; }
+          .controls .project-color-picker .project-color-picker-options .color-option:disabled:hover {
+            color: #bbb;
+            transform: scaleX(1) scaleY(1) scaleZ(1); }
   .controls .tool-button {
     display: inline-block;
-    width: 40px;
-    height: 40px;
-    padding: 7px;
-    border: 1px solid transparent;
+    position: relative;
+    top: 5px;
+    width: 30px;
+    height: 30px;
+    padding: 3px;
+    border-radius: 3px;
+    background: #eee;
     cursor: pointer; }
     .controls .tool-button:hover {
-      border-color: #bbb; }
+      background: #bbb; }
     .controls .tool-button.selected {
-      border-color: #444; }
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+      background: #444; }
+      .controls .tool-button.selected img {
+        filter: drop-shadow(0 0 5px #000); }
     .controls .tool-button img {
       width: 100%; }
   .controls .divider {
     width: 1px;
     height: 40px;
-    background: #eee;
+    background: #fff;
     margin: 0 25px;
     display: inline-block; }
   .controls .ctrl-elem {
@@ -115,61 +235,31 @@ ul {
     height: 100%;
     vertical-align: top;
     width: auto; }
-    .controls .ctrl-elem label {
-      margin-right: 3px; }
+    .controls .ctrl-elem.no-margin {
+      margin: 0;
+      margin-right: -1px; }
     .controls .ctrl-elem.small {
       width: 50px; }
     .controls .ctrl-elem.large {
       width: 140px; }
+    .controls .ctrl-elem label {
+      margin-right: 3px; }
+      .controls .ctrl-elem label.checkbox-label {
+        position: relative;
+        top: 5px;
+        display: inline-block;
+        width: auto;
+        margin: 0;
+        height: 30px;
+        padding: 5px 10px;
+        margin-left: -1px;
+        font-size: 0.9em; }
     .controls .ctrl-elem .numeric-input {
       width: 100%;
-      height: 21px;
+      height: 22px;
       border-radius: 0 !important; }
       .controls .ctrl-elem .numeric-input .numeric-input-btn-up {
         background: #000 !important; }
-  .controls .transport-controls button {
-    -webkit-transition: all 0.1s ease-in-out;
-    -moz-transition: all 0.1s ease-in-out;
-    -o-transition: all 0.1s ease-in-out;
-    transition: all 0.1s ease-in-out;
-    color: #777;
-    transform: scaleX(1) scaleY(1) scaleZ(1);
-    position: relative;
-    z-index: 100;
-    color: #444;
-    font-size: 1.5em;
-    width: 40px;
-    height: 100%; }
-    .controls .transport-controls button:hover {
-      transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
-      color: #222;
-      z-index: 500; }
-    .controls .transport-controls button:active {
-      transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
-      color: #222; }
-    .controls .transport-controls button:disabled {
-      color: #bbb; }
-      .controls .transport-controls button:disabled:hover {
-        color: #bbb;
-        transform: scaleX(1) scaleY(1) scaleZ(1); }
-    .controls .transport-controls button i {
-      margin-left: 15px;
-      display: block;
-      margin: 0 auto;
-      border: none;
-      background: transparent;
-      position: relative;
-      top: 1px;
-      vertical-align: middle;
-      padding: 0; }
-
-#monitor {
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  right: 0;
-  bottom: 0;
-  background: #fff; }
 
 .shape-editor-panel {
   box-shadow: -2px 2px 25px rgba(0, 0, 0, 0.1);
@@ -178,8 +268,6 @@ ul {
   left: 100px;
   top: 100px;
   padding: 5px 15px; }
-  .shape-editor-panel .rangeslider__labels {
-    display: none !important; }
   .shape-editor-panel .tooltip-arrow {
     top: 40px;
     border: solid transparent;
@@ -202,35 +290,15 @@ ul {
   .shape-editor-panel .section {
     padding-top: 5px;
     padding-bottom: 15px; }
-  .shape-editor-panel .signal-meter {
-    vertical-align: middle; }
   .shape-editor-panel .col {
     margin-top: 0;
     margin-bottom: 0; }
-  .shape-editor-panel input[type=checkbox] {
-    position: absolute;
-    top: -9999px;
-    left: -9999px; }
-  .shape-editor-panel label {
-    border-radius: 1px;
-    width: 100%;
-    color: #444;
-    border: 1px solid #bbb;
-    display: inline-block;
-    cursor: pointer; }
-  .shape-editor-panel button {
-    border-radius: 1px;
-    width: 100%;
-    color: #444;
-    border: 1px solid #bbb; }
-    .shape-editor-panel button:active {
-      background: #d5d5d5; }
-    .shape-editor-panel button.shape-attr-delete-shape {
+    .shape-editor-panel .col.shape-attr-delete-shape {
       background: none;
       color: #ff6464;
       padding-top: 4px;
       border: none; }
-      .shape-editor-panel button.shape-attr-delete-shape:hover {
+      .shape-editor-panel .col.shape-attr-delete-shape:hover {
         text-decoration: underline;
         background-color: transparent;
         color: #ff6464; }

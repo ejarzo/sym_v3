@@ -14,7 +14,7 @@ class ShapeEditorPanel extends Component {
         super(props);
 
         const width = 225;
-        const height = 350;
+        const height = 260;
         const xPad = 23;
         const yPad = 33;
 
@@ -31,9 +31,9 @@ class ShapeEditorPanel extends Component {
             isLeft = false;
             x = x - width - xPad;
         } else {
-            x = x + xPad
             // editor shows on right of mosue
             // arrow on left
+            x = x + xPad
         }
         
         if (y + height > window.innerHeight) {
@@ -69,15 +69,8 @@ class ShapeEditorPanel extends Component {
 
     render() {
         const editorArrowClass = this.state.editorArrowIsLeft ? "arrow-left" : "arrow-right"
-        
-        const sliderStyle = {
-            "background": "#000"
-        }
-
         return(    
             <div className="shape-editor-panel" style={this.divStyle}>
-                
-           
                 <div className="row section">
                     <div className="col col-12">
                         <div className="shape-color-picker">
@@ -86,16 +79,16 @@ class ShapeEditorPanel extends Component {
 
                                 const style = {
                                     backgroundColor: color,
-                                    opacity: isSelected ? 1 : 0.4,
+                                    opacity: isSelected ? 1 : 0.3,
                                     //transform: isSelected ? "scale(1.2)" : "scale(1)",
                                     //zIndex: isSelected ? 1 : 0
                                 }
                                 return (
                                     <div 
+                                        key={i}
                                         className="shape-color-option" 
                                         style={style}
                                         onClick={this.props.onColorChange(i)}>
-                                        
                                     </div>
                                 );
                             })}
@@ -103,7 +96,7 @@ class ShapeEditorPanel extends Component {
                     </div>
 
 
-                    <div className="col col-6 slider-container">
+                    <div className="col col-4 slider-container">
                         <Slider
                             className={"color-"+ this.props.colorIndex}
                             orientation='vertical'
@@ -113,24 +106,34 @@ class ShapeEditorPanel extends Component {
                             onChange={this.props.onVolumeChange}
                         />
                     </div>
-
-                    <div className="col col-6">
-                        <div className="col col-12">
-                            <label>Mute</label>
-                            <input type="checkbox" />
-                        </div>
-                        <div className="col col-12">
-                            <label>Solo</label>
-                            <input type="checkbox"/>
-                        </div>
-                        </div>
-                </div>
-
-                <div className="row section">   
-                    <div className="col col-6">
-                        <button>Quantize</button>
-                    </div>                    
                     
+                    {/* MUTE and SOLO */}
+                    <div className="col col-8">
+                        
+                        <div className="col col-6">
+                            <input 
+                                id="mute" 
+                                type="checkbox" 
+                                checked={this.props.isMuted} 
+                                onChange={this.props.onMuteChange}
+                            />
+                            <label className="checkbox-label" htmlFor="mute">Mute</label>
+                        </div>
+                        <div className="col col-6">
+                            <input id="solo" type="checkbox" />
+                            <label className="checkbox-label" htmlFor="solo">Solo</label>
+                        </div>
+
+                        <div className="col col-12">
+                            <button onClick={this.props.onQuantizeClick}>Quantize</button>
+                        </div> 
+                        <div className="col col-6">
+                            <button>*2</button>
+                        </div>
+                        <div className="col col-6">
+                            <button>/2</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="row section">   
@@ -140,9 +143,6 @@ class ShapeEditorPanel extends Component {
                     <div className="col col-6">
                         <button>To Back</button>
                     </div>
-                </div>
-
-                <div className="row section">   
                     <div className="col col-12">
                         <button onClick={this.props.onDeleteClick}>
                             Delete

@@ -30,8 +30,12 @@ class Shape extends React.Component {
             points: props.points,
             colorIndex: props.colorIndex,
             isHoveredOver: false,
+            isMuted: false,
             editorX: 0,
             editorY: 0,
+            scaleRatio: 1,
+            offsetX: 0,
+            offsetY: 0
         };
 
         this.handleVolumeChange = this.handleVolumeChange.bind(this)
@@ -45,8 +49,12 @@ class Shape extends React.Component {
         this.handleMouseDown = this.handleMouseDown.bind(this);    
         this.handleDragStart = this.handleDragStart.bind(this);    
         this.handleDragEnd = this.handleDragEnd.bind(this);    
+        this.dragBoundFunc = this.dragBoundFunc.bind(this);    
+        this.getTotalLength = this.getTotalLength.bind(this);    
+        this.setPerimeterLength = this.setPerimeterLength.bind(this);    
 
         this.handleDelete = this.handleDelete.bind(this);    
+        this.handleMuteChange = this.handleMuteChange.bind(this);    
     }
     
     componentDidMount () {
@@ -58,6 +66,10 @@ class Shape extends React.Component {
             this.setState({
                 isHoveredOver: false
             })
+        }
+
+        if (nextProps.autoQuantizeIsActive) {
+            this.setPerimeterLength();
         }
     }
 
@@ -99,6 +111,12 @@ class Shape extends React.Component {
 
     }
 
+    dragBoundFunc (pos) {
+        return {
+            x: this.props.snapToGrid(pos.x),
+            y: this.props.snapToGrid(pos.y)
+        };
+    }
     handleMouseOver (e) {
         this.setState({
             isHoveredOver: true
@@ -127,19 +145,84 @@ class Shape extends React.Component {
         }
     }
 
+    handleMuteChange (event) {
+        this.setState({
+            isMuted: !this.state.isMuted
+        })
+    }
+
     /* --- Vertecies -------------------------------------------------------- */
 
     handleVertexDragMove(i) {
         return (e) => {
-            const pos = e.target.position()
+            console.log(e.target)
+            const pos = e.target.position();
             let points = this.state.points.slice();
-            points[i] = pos.x;
-            points[i+1] = pos.y;
+            points[i] = this.props.snapToGrid(pos.x);
+            points[i+1] = this.props.snapToGrid(pos.y);
 
             this.setState({
                 points: points
             })
+            if (this.props.autoQuantizeIsActive) {
+                this.setPerimeterLength();
+            }
         };
+    }
+
+    /* --- Helper ----------------------------------------------------------- */
+
+    getTotalLength () {
+        let len = 0;
+        const n = this.state.points.length;
+        const ps = this.state.points;
+
+        for (var i = 2; i < this.state.points.length; i+=2) {
+            const x = ps[i];
+            const y = ps[i+1];
+            const prevX = ps[i-2];
+            const prevY = ps[i-1];
+            len += dist(x,y,prevX,prevY)
+        }
+
+        // last edge
+        len += dist(ps[0], ps[1], ps[n-2], ps[n-1]);
+        return len;
+    }
+
+    setPerimeterLength () {
+        const len = 700;
+        const currLen = this.getTotalLength();
+        const rect = this.shapeElement.getClientRect();
+        
+        const oldScale = this.state.scaleRatio;
+        const cx = (rect.x + rect.width / 2) / oldScale;
+        const cy = (rect.y + rect.height / 2) / oldScale;
+
+        const ratio = len / currLen;
+        
+        console.log("CENTER:", cx, cy);
+        console.log("CURR LEN:", currLen);
+        console.log("RATIO:", ratio);
+
+        let newPoints = this.state.points.slice();
+
+        for (var i = 0; i < newPoints.length; i += 2) {
+            
+            let x = newPoints[i];
+            let y = newPoints[i+1];
+            x *= ratio;
+            y *= ratio;
+            x += (1 - ratio) * cx;
+            y += (1 - ratio) * cy;
+
+            newPoints[i] = x;
+            newPoints[i+1] = y;
+        }
+        
+        this.setState({
+            points: newPoints,
+        })
     }
 
     /* =============================== RENDER =============================== */
@@ -148,31 +231,44 @@ class Shape extends React.Component {
         const color = this.props.colorsList[this.state.colorIndex];
         const isEditMode = this.props.activeTool === 'edit';
         const alphaAmount = this.props.isSelected ? 0.8 : 0.4;
-
+        
         const attrs = {
             strokeWidth: isEditMode ? (this.state.isHoveredOver ? 4 : 2) : 2,
             stroke: color,
-            fill: Color(color).alpha(alphaAmount).toString()
+            fill: Color(color).alpha(alphaAmount).toString(),
+            opacity: this.state.isMuted ? 0.2 : 1
         }
+
+       
 
         // show vertex handles if in edit mode, allow dragging to reshape
         if (isEditMode) {
             return (
                 <Group 
-                    ref= {c => this.groupElement = c}
                     draggable={true}
+                    dragBoundFunc={this.dragBoundFunc}
                     onDragMove={this.handleShapeDrag}
                     onDragStart={this.handleDragStart}
-                    onDragEnd={this.handleDragEnd}>
-                    
+                    onDragEnd={this.handleDragEnd}
+                    opacity={attrs.opacity}
+                    >
                     <Line
+                        ref={c => this.shapeElement = c}
                         points={this.state.points}
                         fill={attrs.fill}
                         lineJoin='bevel'
                         stroke={attrs.stroke}
                         strokeWidth={attrs.strokeWidth}
                         closed={true}
-                        
+                        strokeScaleEnabled={false}
+                        // scale={{
+                        //     x: this.state.scaleRatio,
+                        //     y: this.state.scaleRatio
+                        // }}
+                        // offset={{
+                        //     x: -1*this.state.offsetX,
+                        //     y: -1*this.state.offsetY
+                        // }}
                         onClick={this.handleShapeClick}
                         onMouseDown={this.handleMouseDown}
                         onMouseOver={this.handleMouseOver}
@@ -185,7 +281,10 @@ class Shape extends React.Component {
                                 <ShapeVertex 
                                     key={i}
                                     index={i}
-                                    p={{x: p, y: arr[i+1]}}
+                                    p={{
+                                        x: p, 
+                                        y: arr[i+1]
+                                    }}
                                     onVertexDragMove={this.handleVertexDragMove(i)}
                                     color={color}
                                 />);
@@ -202,13 +301,22 @@ class Shape extends React.Component {
                                 x: this.state.editorX,
                                 y: this.state.editorY
                             }}
+                            
+                            tempo={this.props.tempo} 
+                            
                             volume={this.state.volume}
                             onVolumeChange={this.handleVolumeChange}
-                            tempo={this.props.tempo} 
-                            onDeleteClick={this.handleDelete}
+                            
+                            isMuted={this.state.isMuted}
+                            onMuteChange={this.handleMuteChange}
+
                             colorIndex={this.state.colorIndex}
                             colorsList={this.props.colorsList}
                             onColorChange={this.handleColorChange}
+                            
+                            onQuantizeClick={this.setPerimeterLength}
+                            onDeleteClick={this.handleDelete}
+
                         />
                     </Portal>
 
@@ -220,9 +328,19 @@ class Shape extends React.Component {
             return (   
                 <Group 
                     draggable={false}
-                    ref= {c => this.groupElement = c}>
-                    
+                    opacity={attrs.opacity}
+                >   
                     <Line
+                        ref={c => this.shapeElement = c}
+                        strokeScaleEnabled={false}
+                        // scale={{
+                        //     x: this.state.scaleRatio,
+                        //     y: this.state.scaleRatio
+                        // }}
+                        // offset={{
+                        //     x: -1*this.state.offsetX,
+                        //     y: -1*this.state.offsetY
+                        // }}
                         points={this.state.points}
                         fill={attrs.fill}
                         lineJoin='miter'
@@ -234,7 +352,10 @@ class Shape extends React.Component {
                     <ShapeVertex 
                         index={0}
                         color={color}
-                        p={{x: this.state.points[0], y: this.state.points[1]}}
+                        p={{
+                            x: this.state.points[0], 
+                            y: this.state.points[1]
+                        }}
                         onVertexDragMove={this.handleVertexDragMove(0)}
                     />
                 </Group>
@@ -246,6 +367,9 @@ class Shape extends React.Component {
 
 export default Shape
 
+function dist(x0,y0,x1,y1) {
+    return Math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0));
+}
 
 /*
     The shape's vertecies. Can be dragged to edit the shape.
