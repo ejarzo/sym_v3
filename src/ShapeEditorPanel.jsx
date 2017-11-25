@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import Select from 'react-select'
 
 // sliders
 import Slider from 'react-rangeslider'
@@ -128,20 +127,26 @@ class ShapeEditorPanel extends Component {
                             <button onClick={this.props.onQuantizeClick}>Quantize</button>
                         </div> 
                         <div className="col col-6">
-                            <button>*2</button>
+                            <button
+                                onClick={this.props.onQuantizeFactorChange(2)}>
+                                *2
+                            </button>
                         </div>
                         <div className="col col-6">
-                            <button>/2</button>
+                            <button
+                                onClick={this.props.onQuantizeFactorChange(0.5)}>
+                                /2
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <div className="row section">   
                     <div className="col col-6">
-                        <button>To Front</button>
+                        <button onClick={this.props.onToTopClick}>To Front</button>
                     </div>
                     <div className="col col-6">
-                        <button>To Back</button>
+                        <button onClick={this.props.onToBottomClick}>To Back</button>
                     </div>
                     <div className="col col-12">
                         <button onClick={this.props.onDeleteClick}>
@@ -149,7 +154,11 @@ class ShapeEditorPanel extends Component {
                         </button>
                     </div>
                 </div>
-               
+                <div className="row section">   
+                    <span>
+                        Perimeter: {this.props.perimeter}
+                    </span>
+                </div>
                 <div className={"tooltip-arrow " + editorArrowClass} style={this.arrowStyle}></div>
             </div>
         );

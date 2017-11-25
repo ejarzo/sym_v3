@@ -3,10 +3,11 @@ import React, { Component } from 'react';
 import Teoria from 'teoria';
 import Select from 'react-select';
 import NumericInput from 'react-numeric-input';
-import Toggle from 'react-toggle';
-
+import Fullscreen from 'react-full-screen';
 
 import ShapeCanvas from './ShapeCanvas.jsx';
+import InstColorController from './InstColorController.js';
+
 import drawIcon from './img/draw-icon.svg'
 import editIcon from './img/edit-icon.svg'
 import drawIconWhite from './img/draw-icon-white.svg'
@@ -64,41 +65,48 @@ class Project extends Component {
 
         this.state = {
             name: props.initState.name,
+            isFullscreenEnabled: false,
+
+            isGridActive: false,
+            isSnapToGridActive: false,
+            isAutoQuantizeActive: false,
+            
+            quantizeLength: 700,
             tempo: props.initState.tempo,
             scaleObj: Teoria.note(props.initState.tonic).scale(props.initState.scale),
             
-            colorPickerIsOpen: false,
-            
-            gridIsActive: false,
-            snapToGridIsActive: false,
-            autoQuantizeIsActive: true,
-            quantizeLength: 700,
-
             isPlaying: false,
             activeTool: 'draw',
             activeColorIndex: 0
         }
-
-        this.activeColor = colorsList[this.state.activeColorIndex];
         
+        // transport
         this.handlePlayClick = this.handlePlayClick.bind(this);
-        this.handleTempoChange = this.handleTempoChange.bind(this);
-        this.handleTonicChange = this.handleTonicChange.bind(this);
-        this.handleScaleChange = this.handleScaleChange.bind(this);
-        this.handleColorPickerClick = this.handleColorPickerClick.bind(this);
-        
-        this.handleGridToggleChange = this.handleGridToggleChange.bind(this);
-        this.handleSnapToGridToggleChange = this.handleSnapToGridToggleChange.bind(this);
-        this.handleAutoQuantizeChange = this.handleAutoQuantizeChange.bind(this);
-        
+
+        // color and tool
+        this.handleColorChange = this.handleColorChange.bind(this);
         this.toggleActiveTool = this.toggleActiveTool.bind(this);
         this.handleDrawToolClick = this.handleDrawToolClick.bind(this);
         this.handleEditToolClick = this.handleEditToolClick.bind(this);
-        this.handleColorChange = this.handleColorChange.bind(this);
+        this.closeColorPicker = this.closeColorPicker.bind(this);
+
+        // toggles
+        this.handleGridToggleChange = this.handleGridToggleChange.bind(this);
+        this.handleSnapToGridToggleChange = this.handleSnapToGridToggleChange.bind(this);
+        this.handleAutoQuantizeChange = this.handleAutoQuantizeChange.bind(this);
+
+        // music options
+        this.handleTempoChange = this.handleTempoChange.bind(this);
+        this.handleTonicChange = this.handleTonicChange.bind(this);
+        this.handleScaleChange = this.handleScaleChange.bind(this);
+        
+        // canvas
         this.handleClearButtonClick = this.handleClearButtonClick.bind(this);
         
     }
     
+    /* ============================= LIFECYCLE ============================== */
+
     componentWillMount(){
         document.addEventListener("keydown", this.handleKeyDown.bind(this));
     }
@@ -163,19 +171,19 @@ class Project extends Component {
 
     handleGridToggleChange () {
         this.setState({
-            gridIsActive: !this.state.gridIsActive
+            isGridActive: !this.state.isGridActive
         })
     }
 
     handleSnapToGridToggleChange () {
         this.setState({
-            snapToGridIsActive: !this.state.snapToGridIsActive
+            isSnapToGridActive: !this.state.isSnapToGridActive
         })
     }
 
     handleAutoQuantizeChange () {
         this.setState({
-            autoQuantizeIsActive: !this.state.autoQuantizeIsActive
+            isAutoQuantizeActive: !this.state.isAutoQuantizeActive
         })
     }
 
@@ -204,12 +212,6 @@ class Project extends Component {
         this.shapeCanvas.clearAll();
     }
 
-    handleColorPickerClick () {
-        this.setState({
-            colorPickerOpen: !this.state.colorPickerOpen
-        })
-    }
-
     /* --- Keyboard Shortcuts ----------------------------------------------- */
 
     handleKeyDown(event) {
@@ -225,7 +227,7 @@ class Project extends Component {
         if (event.key === '1' || event.key === '2' || event.key === '3' ||
             event.key === '4' || event.key === '5') {
             this.setState({
-                activeColorIndex: parseInt(event.key) - 1
+                activeColorIndex: parseInt(event.key, 10) - 1
             })
         }
 
@@ -235,182 +237,232 @@ class Project extends Component {
         }
     }
 
+    closeColorPicker () {
+        if (this.colorPicker.state.isOpen) {
+            this.colorPicker.close();
+        }
+    }
+
     /* =============================== RENDER =============================== */
 
     render() {    
         const playButtonClass = this.state.isPlaying ? "ion-stop" : "ion-play";
+        const fullscreenButtonClass = this.state.isFullscreenEnabled ? "ion-arrow-shrink" : "ion-arrow-expand";
 
         return (
-            <div>
+            <Fullscreen
+
+                enabled={this.state.isFullscreenEnabled}
+                onChange={isFullscreenEnabled => this.setState({isFullscreenEnabled})}>
+
                 {/* The Controls */}
-                <div className="controls">
+                <div className="controls" onClick={this.closeColorPicker}>
                     
                     {/* Transport Controls */}
                     <div className="controls-section transport-controls">
-                        <button className="transport-icon play-stop-toggle" 
-                                onClick={this.handlePlayClick} 
-                                title="Play project (SPACE)">
-                            <i className={playButtonClass}></i>
-                        </button>
-                        <button className="transport-icon record-toggle" title="Record to audio file">
-                            <i className="ion-record"></i>
-                        </button>
+                        <div className="ctrl-elem">
+                            <button className="icon-button" 
+                                    onClick={this.handlePlayClick} 
+                                    title="Play project (SPACE)">
+                                <i className={playButtonClass}></i>
+                            </button>
+                        </div>
+                        <div className="ctrl-elem">
+                            <button className="icon-button" title="Record to audio file">
+                                <i className="ion-record"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div className="divider"></div>
 
                     {/* Drawing Controls*/}
                     <div className="controls-section">
                         
                         {/* Color Select */}
-                        <span className="ctrl-elem">
+                        <div className="ctrl-elem">
                             <ColorPicker 
+                                ref={(c) => this.colorPicker = c}
                                 activeColorIndex={this.state.activeColorIndex}
                                 onColorChange={this.handleColorChange}
                             />
-                        </span>
+                        </div>
 
                         {/* Tool Select */}
-                        <span
-                            className={"tool-button " + (this.state.activeTool === 'draw' ? "selected" : "")}
-                            onClick={this.handleDrawToolClick}
-                            style={{marginRight: '10px'}}
-                            title="Draw Tool (TAB to toggle)"
-                        >
-                            <img src={this.state.activeTool === 'draw' ? drawIconWhite : drawIcon} alt="draw tool"/>
-                        </span>
-                        <span 
-                            className={"tool-button " + (this.state.activeTool === 'edit' ? "selected" : "")}
-                            onClick={this.handleEditToolClick}
-                            title="Edit Tool (TAB to toggle)"
-                        >
-                            <img src={this.state.activeTool === 'edit' ? editIconWhite : editIcon} alt="edit tool"/>
-                        </span>                        
+                        <div className="ctrl-elem">
+                            <span
+                                className={"tool-button " + (this.state.activeTool === 'draw' ? "selected" : "")}
+                                onClick={this.handleDrawToolClick}
+                                title="Draw Tool (TAB to toggle)">
+                                <img src={this.state.activeTool === 'draw' ? drawIconWhite : drawIcon} alt="draw tool"/>
+                            </span>
+                        </div>
+                        <div className="ctrl-elem no-margin">
+                            <span 
+                                className={"tool-button " + (this.state.activeTool === 'edit' ? "selected" : "")}
+                                onClick={this.handleEditToolClick}
+                                title="Edit Tool (TAB to toggle)">
+                                <img src={this.state.activeTool === 'edit' ? editIconWhite : editIcon} alt="edit tool"/>
+                            </span>                        
+                        </div>
                     </div>
-                    <div className="divider"></div>
 
+                    {/* Toggle Controls */}
                     <div className="controls-section">
+                        
                         <div className="ctrl-elem no-margin">
                             
+                            {/* Grid */}
                             <input 
                                 id="grid-toggle" 
                                 type="checkbox"
-                                checked={this.state.gridIsActive}
-                                onChange={this.handleGridToggleChange}
-                            />
-                            <label className="checkbox-label" htmlFor="grid-toggle">Grid</label>
-                       
+                                checked={this.state.isGridActive}
+                                onChange={this.handleGridToggleChange}/>
+                            <label 
+                                className="checkbox-label" 
+                                htmlFor="grid-toggle"
+                                style={{
+                                    borderTopLeftRadius: "3px", 
+                                    borderBottomLeftRadius: "3px"
+                                }}>
+                                Grid
+                            </label>
+                            
+                            {/* Snap To Grid */}
                             <input 
                                 id="snap-to-grid-toggle" 
                                 type="checkbox" 
-                                checked={this.state.snapToGridIsActive}
-                                onChange={this.handleSnapToGridToggleChange}
-                                />
+                                checked={this.state.isSnapToGridActive}
+                                onChange={this.handleSnapToGridToggleChange}/>
                             <label className="checkbox-label" htmlFor="snap-to-grid-toggle">Snap</label>
-                        {/*</div>
-                        <div className="ctrl-elem no-margin">*/}
+                            
+                            {/* Toggle Auto Quantize*/}
                             <input 
                                 id="auto-quantize-toggle" 
                                 type="checkbox" 
-                                checked={this.state.autoQuantizeIsActive}
-                                onChange={this.handleAutoQuantizeChange}
-                            />
-                            <label className="checkbox-label" htmlFor="auto-quantize-toggle">Auto Quantize</label>
+                                checked={this.state.isAutoQuantizeActive}
+                                onChange={this.handleAutoQuantizeChange}/>
+                            <label 
+                                className="checkbox-label" 
+                                style={{
+                                    borderTopRightRadius: "3px", 
+                                    borderBottomRightRadius: "3px"
+                                }}
+                                htmlFor="auto-quantize-toggle">
+                                Sync
+                            </label>
                         </div>
                     </div>
-                    <div className="divider"></div>
 
                     {/* Music Controls */}
                     <div className="controls-section music-controls">
                         <span className="ctrl-elem small">
-                            {/*<label>Tempo</label>*/}
-                            <NumericInput 
-                                className="numeric-input" 
-                                min={1} 
-                                max={100}
-                                onChange={this.handleTempoChange}
-                                value={this.state.tempo}
-                                style={{
-                                    input: {
-                                        lineHeight: '10',
-                                        padding: 'none'
-                                    },
-                                    'input:focus' : {
-                                        border: '1px inset #222',
-                                        outline: 'none'
-                                    },
-                                    btn: {
-                                        boxShadow: 'none'
-                                    },
-                                    btnUp: {
-                                        color: '#ddd',
-                                        borderRadius: 'none',
-                                        background: 'none',
-                                        border: 'none',
-                                    },
-                                    btnDown: {
-                                        color: '#ddd',
-                                        borderRadius: 'none',
-                                        background: 'none',
-                                        border: 'none',
-                                    },
-                                    arrowUp: {
-                                        borderBottomColor: 'rgba(102, 102, 102, 1)'
-                                    },
-                                    arrowDown: {
-                                        borderTopColor: 'rgba(102, 102, 102, 1)'
-                                    }
-                                }} 
-                            />
+                            <div className="full-width">
+                                <label>Tempo</label>
+                                <NumericInput 
+                                    className="numeric-input" 
+                                    min={1} 
+                                    max={100}
+                                    onChange={this.handleTempoChange}
+                                    value={this.state.tempo}
+                                    style={{
+                                        input: {
+                                            lineHeight: '10',
+                                            padding: 'none'
+                                        },
+                                        'input:focus' : {
+                                            border: '1px inset #222',
+                                            outline: 'none'
+                                        },
+                                        btn: {
+                                            boxShadow: 'none'
+                                        },
+                                        btnUp: {
+                                            color: '#ddd',
+                                            borderRadius: 'none',
+                                            background: 'none',
+                                            border: 'none',
+                                        },
+                                        btnDown: {
+                                            color: '#ddd',
+                                            borderRadius: 'none',
+                                            background: 'none',
+                                            border: 'none',
+                                        },
+                                        arrowUp: {
+                                            borderBottomColor: 'rgba(102, 102, 102, 1)'
+                                        },
+                                        arrowDown: {
+                                            borderTopColor: 'rgba(102, 102, 102, 1)'
+                                        }
+                                    }} 
+                                />
+                            </div>
                         </span>
                         <span className="ctrl-elem small">
-                            {/*<label>Key</label>*/}
-                            <Select
-                            searchable={false}
-                            clearable={false}
-                            name="Key Select"
-                            value={this.state.scaleObj.tonic.toString(true)}
-                            options={tonicsList}
-                            onChange={this.handleTonicChange}
-                            />
+                            <div className="full-width">
+                                <label>Key</label>
+                                <Select
+                                    searchable={false}
+                                    clearable={false}
+                                    name="Key Select"
+                                    value={this.state.scaleObj.tonic.toString(true)}
+                                    options={tonicsList}
+                                    onChange={this.handleTonicChange}/>
+                            </div>
                         </span>
 
                         <span className="ctrl-elem large">
-                            {/*<label>Scale</label>*/}
-                            <Select
-                            color="red"
-                            searchable={false}
-                            clearable={false}
-                            name="Key Select"
-                            value={this.state.scaleObj.name}
-                            options={scalesList}
-                            onChange={this.handleScaleChange}
-                            />
+                            <div className="full-width">
+                                <label>Scale</label>
+                                <Select
+                                    color="red"
+                                    searchable={false}
+                                    clearable={false}
+                                    name="Key Select"
+                                    value={this.state.scaleObj.name}
+                                    options={scalesList}
+                                    onChange={this.handleScaleChange}/>
+                            </div>
                         </span>
                     </div>
-                    <div className="divider"></div>
                     
+                    {/* Canvas Controls */}
                     <div className="controls-section canvas-controls">
-                        <button onClick={this.handleClearButtonClick}>
-                            Clear
-                        </button>
+                        <div className="ctrl-elem">
+                            <button className="icon-button" onClick={() => this.setState({isFullscreenEnabled: !this.state.isFullscreenEnabled})}>
+                                <i className={fullscreenButtonClass}></i>
+                            </button>
+                        </div>
+                        <div className="ctrl-elem">
+                            <button onClick={this.handleClearButtonClick}>
+                                Clear
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
+                <div className="inst-selectors">
+                    <ul className="inst-list">
+                        <InstColorController />
+                        <InstColorController />
+                        <InstColorController />
+                        <InstColorController />
+                    </ul>
+                </div>
                 {/* The Canvas */}
                 <ShapeCanvas
                     ref={(c) => this.shapeCanvas = c}
                     colorsList={colorsList}
                     colorIndex={this.state.activeColorIndex}
                     activeTool={this.state.activeTool}
-                    
-                    autoQuantizeIsActive={this.state.autoQuantizeIsActive}
+                    closeColorPicker={this.closeColorPicker}
+                    isAutoQuantizeActive={this.state.isAutoQuantizeActive}
                     tempo={this.state.tempo}
                     quantizeLength={this.state.quantizeLength}
 
-                    gridIsActive={this.state.gridIsActive}
-                    snapToGridIsActive={this.state.snapToGridIsActive}
+                    isGridActive={this.state.isGridActive}
+                    isSnapToGridActive={this.state.isSnapToGridActive}
                 />
-            </div>        
+            </Fullscreen>        
         );
     }
 }
@@ -437,6 +489,12 @@ class ColorPicker extends Component {
         })
     }
 
+    close () {
+       this.setState({
+           isOpen: false
+       }) 
+    }
+
     render () {
         const colorPickercContent = this.state.isOpen ? (
             <div className="project-color-picker-options">
@@ -444,6 +502,7 @@ class ColorPicker extends Component {
                     const style = { backgroundColor: color }       
                     return i === this.props.activeColorIndex ? null : (
                         <div 
+                            key={i}
                             className="color-option" 
                             style={style}
                             onClick={this.props.onColorChange(i)}
@@ -457,13 +516,12 @@ class ColorPicker extends Component {
                 <div
                     title="Select Draw Color (Numbers 1-5)" 
                     className="project-color-picker"
-                    onClick={this.handleColorPickerClick}
-                >
-                    <div className="color-picker-button"
+                    onClick={this.handleColorPickerClick}>
+                    <div 
+                        className="color-picker-button"
                         style={{
                             backgroundColor: colorsList[this.props.activeColorIndex]
-                        }}
-                    >
+                        }}>
                     </div>
                     {colorPickercContent}
                 </div>

@@ -150,7 +150,7 @@ label.checkbox-label, button
     border: 1px solid darken($color-grey-lighter, 5)
     display: inline-block
     cursor: pointer
-    margin-bottom: 10px
+    //margin-bottom: 10px
     height: 25px
     padding: 2px 7px 
 
@@ -183,42 +183,122 @@ button
 .dropdown
     @include dropdown
 
+.icon-button
+    background: none
+    border: none
+    @include button_expand_on_hover
+    color: $color-grey-dark
+    font-size: 1.8em
+    width: 30px
+    height: 100%
+    &:active
+        background: none
+    i
+        position: relative
+        top: 1px
 
+.inst-selectors
+    position: absolute
+    height: 92px
+    bottom: 0
+    left: 0
+    right: 0
+    z-index: 100
+    //height: 92px
+    //width: 100%
+    background: #ddd
+    ul.inst-list
+        overflow-x: scroll
+        overflow-y: hidden
+        white-space: nowrap
+        height: 100%
+        font-size: 0
+        &::-webkit-scrollbar
+            display: none
+        li.inst-option
+            background: #ccc
+            text-align: center
+            width: 25%
+            height: 100%
+            font-size: 12px
+            display: inline-block
+            text-transform: capitalize
+            vertical-align: middle
+            color: $color-white
+            .inst-title
+                background: #aaa
+                height: 22px
+                text-align: left
+                .inst-select
+                    width: 50%
+                i
+                    @include button_expand_on_hover
+                    color: $color-white !important
+                    padding-right: 3px
+                    font-size: 18px
+                    position: relative
+                    top: -2px
+                    display: block
+                    width: 13px
+                button
+                    float: right
+                    &.mute-solo-channel
+                        &:active
+                            background: #fff    
+                            color: #222
+
+            .inst-params
+                height: 100%
+                li
+                    display: inline-block
+                    height: 67px
+                    min-width: 65px
+                    width: 25%
+                    overflow: hidden
+                    padding-right: 10px
+                    padding-left: 10px
+                    .knob-container 
+                        padding-top: 7px
+                    .expand-on-hover
+                        @include button_expand_on_hover
+                .inst-param-title
+                    display: block
+                    width: 100%
+                    text-align: center
+                    font-size: .9em
+                    position: relative
+                    top: -7px
 /* ========================================================================== */
 
 .controls 
     position: relative
     top: 0px
-    padding-left: 10px
-    padding-top: 10px
+    height: 56px
+    padding: 8px
     width: 100%
-    padding-bottom: 10px
     background-color: $color-white
+    display: flex
+    align-items: center
     //overflow: hidden
     //width: 320px
     //white-space: nowrap
     .controls-section
         display: inline-block
         margin: 0
-        vertical-align: top
-        height: 40px
-       
-        &.transport-controls
-            button
-                background: none
-                border: none
-                @include button_expand_on_hover
-                color: $color-grey-dark
-                font-size: 1.8em
-                width: 40px
-                height: 100%
-                i
-                    position: relative
-                    top: 1px
+        height: 100%
+        display: flex
+        align-items: center
+        margin-right: 50px
+        &.music-controls
+            position: relative
+            top: -6px
+            label
+                display: inline-block
+                position: relative
+                top: 1px
+                font-size: 10px
     
     .project-color-picker
-        position: relative
-        top: 5px
         width: 30px
         height: 30px
         .color-picker-button
@@ -246,8 +326,6 @@ button
 
     .tool-button
         display: inline-block
-        position: relative
-        top: 5px
         width: 30px
         height: 30px
         padding: 3px
@@ -266,20 +344,20 @@ button
             
     .divider
         width: 1px
-        height: 40px
+        height: 100%
         background: #fff
         margin: 0 25px
         display: inline-block
 
     .ctrl-elem 
         margin-right: 10px
-        display: inline-block
+        display: flex
+        align-items: center
         height: 100%
-        vertical-align: top
         width: auto
+
         &.no-margin
             margin: 0
-            margin-right: -1px
                 
         &.small
             width: 50px
@@ -289,10 +367,10 @@ button
         
         label
             margin-right: 3px
+            width: 100%
             &.checkbox-label
-                position: relative
-                top: 5px
                 display: inline-block
+                border-color: #ccc
                 width: auto
                 margin: 0
                 height: 30px
@@ -307,7 +385,8 @@ button
             .numeric-input-btn-up
                 background: #000 !important
                 
-   
+.full-width
+    width: 100%
 
 .shape-editor-panel
     @include drop_shadow
@@ -336,6 +415,9 @@ button
             @include button_warning
             padding-top: 4px
             border: none
+    
+    label.checkbox-label, button
+        margin-bottom: 10px
     
     .shape-color-picker
         margin-top: 10px

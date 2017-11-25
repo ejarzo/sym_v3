@@ -59,7 +59,6 @@ label.checkbox-label, button {
   border: 1px solid #e1e1e1;
   display: inline-block;
   cursor: pointer;
-  margin-bottom: 10px;
   height: 25px;
   padding: 2px 7px; }
 
@@ -105,50 +104,162 @@ button:active {
   .dropdown:hover .dropdown-content {
     display: block; }
 
+.icon-button {
+  background: none;
+  border: none;
+  transition: all 0.1s ease-in-out;
+  color: #777;
+  transform: scaleX(1) scaleY(1) scaleZ(1);
+  position: relative;
+  z-index: 100;
+  color: #444;
+  font-size: 1.8em;
+  width: 30px;
+  height: 100%; }
+  .icon-button:hover {
+    transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+    color: #222;
+    z-index: 500; }
+  .icon-button:active {
+    transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+    color: #222; }
+  .icon-button:disabled {
+    color: #bbb; }
+    .icon-button:disabled:hover {
+      color: #bbb;
+      transform: scaleX(1) scaleY(1) scaleZ(1); }
+  .icon-button:active {
+    background: none; }
+  .icon-button i {
+    position: relative;
+    top: 1px; }
+
+.inst-selectors {
+  position: absolute;
+  height: 92px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #ddd; }
+  .inst-selectors ul.inst-list {
+    overflow-x: scroll;
+    overflow-y: hidden;
+    white-space: nowrap;
+    height: 100%;
+    font-size: 0; }
+    .inst-selectors ul.inst-list::-webkit-scrollbar {
+      display: none; }
+    .inst-selectors ul.inst-list li.inst-option {
+      background: #ccc;
+      text-align: center;
+      width: 25%;
+      height: 100%;
+      font-size: 12px;
+      display: inline-block;
+      text-transform: capitalize;
+      vertical-align: middle;
+      color: #fff; }
+      .inst-selectors ul.inst-list li.inst-option .inst-title {
+        background: #aaa;
+        height: 22px;
+        text-align: left; }
+        .inst-selectors ul.inst-list li.inst-option .inst-title .inst-select {
+          width: 50%; }
+        .inst-selectors ul.inst-list li.inst-option .inst-title i {
+          transition: all 0.1s ease-in-out;
+          color: #777;
+          transform: scaleX(1) scaleY(1) scaleZ(1);
+          position: relative;
+          z-index: 100;
+          color: #fff !important;
+          padding-right: 3px;
+          font-size: 18px;
+          position: relative;
+          top: -2px;
+          display: block;
+          width: 13px; }
+          .inst-selectors ul.inst-list li.inst-option .inst-title i:hover {
+            transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+            color: #222;
+            z-index: 500; }
+          .inst-selectors ul.inst-list li.inst-option .inst-title i:active {
+            transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+            color: #222; }
+          .inst-selectors ul.inst-list li.inst-option .inst-title i:disabled {
+            color: #bbb; }
+            .inst-selectors ul.inst-list li.inst-option .inst-title i:disabled:hover {
+              color: #bbb;
+              transform: scaleX(1) scaleY(1) scaleZ(1); }
+        .inst-selectors ul.inst-list li.inst-option .inst-title button {
+          float: right; }
+          .inst-selectors ul.inst-list li.inst-option .inst-title button.mute-solo-channel:active {
+            background: #fff;
+            color: #222; }
+      .inst-selectors ul.inst-list li.inst-option .inst-params {
+        height: 100%; }
+        .inst-selectors ul.inst-list li.inst-option .inst-params li {
+          display: inline-block;
+          height: 67px;
+          min-width: 65px;
+          width: 25%;
+          overflow: hidden;
+          padding-right: 10px;
+          padding-left: 10px; }
+          .inst-selectors ul.inst-list li.inst-option .inst-params li .knob-container {
+            padding-top: 7px; }
+          .inst-selectors ul.inst-list li.inst-option .inst-params li .expand-on-hover {
+            transition: all 0.1s ease-in-out;
+            color: #777;
+            transform: scaleX(1) scaleY(1) scaleZ(1);
+            position: relative;
+            z-index: 100; }
+            .inst-selectors ul.inst-list li.inst-option .inst-params li .expand-on-hover:hover {
+              transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+              color: #222;
+              z-index: 500; }
+            .inst-selectors ul.inst-list li.inst-option .inst-params li .expand-on-hover:active {
+              transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
+              color: #222; }
+            .inst-selectors ul.inst-list li.inst-option .inst-params li .expand-on-hover:disabled {
+              color: #bbb; }
+              .inst-selectors ul.inst-list li.inst-option .inst-params li .expand-on-hover:disabled:hover {
+                color: #bbb;
+                transform: scaleX(1) scaleY(1) scaleZ(1); }
+        .inst-selectors ul.inst-list li.inst-option .inst-params .inst-param-title {
+          display: block;
+          width: 100%;
+          text-align: center;
+          font-size: 0.9em;
+          position: relative;
+          top: -7px; }
+
 /* ========================================================================== */
 .controls {
   position: relative;
   top: 0px;
-  padding-left: 10px;
-  padding-top: 10px;
+  height: 56px;
+  padding: 8px;
   width: 100%;
-  padding-bottom: 10px;
-  background-color: #fff; }
+  background-color: #fff;
+  display: flex;
+  align-items: center; }
   .controls .controls-section {
     display: inline-block;
     margin: 0;
-    vertical-align: top;
-    height: 40px; }
-    .controls .controls-section.transport-controls button {
-      background: none;
-      border: none;
-      transition: all 0.1s ease-in-out;
-      color: #777;
-      transform: scaleX(1) scaleY(1) scaleZ(1);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    margin-right: 50px; }
+    .controls .controls-section.music-controls {
       position: relative;
-      z-index: 100;
-      color: #444;
-      font-size: 1.8em;
-      width: 40px;
-      height: 100%; }
-      .controls .controls-section.transport-controls button:hover {
-        transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
-        color: #222;
-        z-index: 500; }
-      .controls .controls-section.transport-controls button:active {
-        transform: scaleX(1.2) scaleY(1.2) scaleZ(1);
-        color: #222; }
-      .controls .controls-section.transport-controls button:disabled {
-        color: #bbb; }
-        .controls .controls-section.transport-controls button:disabled:hover {
-          color: #bbb;
-          transform: scaleX(1) scaleY(1) scaleZ(1); }
-      .controls .controls-section.transport-controls button i {
+      top: -6px; }
+      .controls .controls-section.music-controls label {
+        display: inline-block;
         position: relative;
-        top: 1px; }
+        top: 1px;
+        font-size: 10px; }
   .controls .project-color-picker {
-    position: relative;
-    top: 5px;
     width: 30px;
     height: 30px; }
     .controls .project-color-picker .color-picker-button {
@@ -206,8 +317,6 @@ button:active {
             transform: scaleX(1) scaleY(1) scaleZ(1); }
   .controls .tool-button {
     display: inline-block;
-    position: relative;
-    top: 5px;
     width: 30px;
     height: 30px;
     padding: 3px;
@@ -225,29 +334,28 @@ button:active {
       width: 100%; }
   .controls .divider {
     width: 1px;
-    height: 40px;
+    height: 100%;
     background: #fff;
     margin: 0 25px;
     display: inline-block; }
   .controls .ctrl-elem {
     margin-right: 10px;
-    display: inline-block;
+    display: flex;
+    align-items: center;
     height: 100%;
-    vertical-align: top;
     width: auto; }
     .controls .ctrl-elem.no-margin {
-      margin: 0;
-      margin-right: -1px; }
+      margin: 0; }
     .controls .ctrl-elem.small {
       width: 50px; }
     .controls .ctrl-elem.large {
       width: 140px; }
     .controls .ctrl-elem label {
-      margin-right: 3px; }
+      margin-right: 3px;
+      width: 100%; }
       .controls .ctrl-elem label.checkbox-label {
-        position: relative;
-        top: 5px;
         display: inline-block;
+        border-color: #ccc;
         width: auto;
         margin: 0;
         height: 30px;
@@ -260,6 +368,9 @@ button:active {
       border-radius: 0 !important; }
       .controls .ctrl-elem .numeric-input .numeric-input-btn-up {
         background: #000 !important; }
+
+.full-width {
+  width: 100%; }
 
 .shape-editor-panel {
   box-shadow: -2px 2px 25px rgba(0, 0, 0, 0.1);
@@ -302,6 +413,8 @@ button:active {
         text-decoration: underline;
         background-color: transparent;
         color: #ff6464; }
+  .shape-editor-panel label.checkbox-label, .shape-editor-panel button {
+    margin-bottom: 10px; }
   .shape-editor-panel .shape-color-picker {
     margin-top: 10px;
     padding: 0 5px;

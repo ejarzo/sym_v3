@@ -26,7 +26,7 @@ const defaultState = {
 class App extends Component {
     render() {
         return (
-          <Project initState={defaultState} />
+            <Project initState={defaultState} />
         );
     }
 }

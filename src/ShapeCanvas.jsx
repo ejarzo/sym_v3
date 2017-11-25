@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import Color from 'color';
 import {Stage, Layer, Line, Circle, Group} from 'react-konva';
 import Shape from './Shape.jsx'
+import Utils from './Utils.js'
 
 /*
     The ShapeCanvas is canvas where the shapes are drawn
@@ -83,20 +84,33 @@ class ShapeCanvas extends Component {
     }
 
     handleClick (e) {
-        if (this.props.activeTool === 'draw') {
-            // hovering over first point
-            if (this.state.drawingState === 'preview') {
-                this.appendShape();
+        this.props.closeColorPicker();
+
+        // left click
+        if (e.evt.which === 1) {
+            if (this.props.activeTool === 'draw') {
+                // hovering over first point
+                if (this.state.drawingState === 'preview') {
+                    this.appendShape();
+                    this.setState({
+                        drawingState: 'pending'
+                    })
+                } else {
+                    let newPoints = this.state.currPoints.slice();
+                    newPoints.push(this.state.mousePos.x, this.state.mousePos.y);
+                    this.setState({
+                        currPoints: newPoints,
+                        drawingState: 'drawing'
+                    })
+                }
+            }
+        } 
+        // right click to cancel shape mid-draw
+        else if (e.evt.which === 3) {
+            if (this.state.drawingState !== 'pending') {
                 this.setState({
+                    currPoints: [],
                     drawingState: 'pending'
-                })
-            } else {
-                let newPoints = this.state.currPoints.slice();
-                console.log(newPoints)
-                newPoints.push(this.state.mousePos.x, this.state.mousePos.y);
-                this.setState({
-                    currPoints: newPoints,
-                    drawingState: 'drawing'
                 })
             }
         }
@@ -115,7 +129,7 @@ class ShapeCanvas extends Component {
         y = this.snapToGrid(y);
 
         // snap to origin if within radius
-        if (this.state.currPoints.length > 2 && (dist(e.evt.offsetX, e.evt.offsetY, originX, originY) < this.originLockRadius
+        if (this.state.currPoints.length > 2 && (Utils.dist(e.evt.offsetX, e.evt.offsetY, originX, originY) < this.originLockRadius
                 || (x === originX && y === originY))) {
             x = originX;
             y = originY;
@@ -164,30 +178,32 @@ class ShapeCanvas extends Component {
     }
 
     snapToGrid (point) {
-        return this.props.snapToGridIsActive ? 
+        return this.props.isSnapToGridActive ? 
                     Math.round(point / this.state.gridSize) * this.state.gridSize : point;
     }
 
     /* =============================== RENDER =============================== */
 
     render() {
-
-        const gridDots = this.props.gridIsActive ? this.createGrid() : null;
+        // TODO not every render ?
+        const gridDots = this.props.isGridActive ? this.createGrid() : null;
+        //console.log("canvas render");
         return (
-            <div id="holder">
+            <div id="holder" onContextMenu={(e) => {e.preventDefault();}}>
                 <Stage 
                     width={window.innerWidth} 
                     height={window.innerHeight}
                     onContentClick={this.handleClick}
                     onContentMouseMove={this.handleMouseMove}
                     onContentMouseDown={this.handleMouseDown}
-                    quantizeLength={this.props.quantizeLength}
-                >
+                    quantizeLength={this.props.quantizeLength}>
+                    
                     <Layer>
                         <Group>
                             {gridDots}
                         </Group>
                     </Layer>
+                    
                     <Layer>
                         <Group>
                             {this.state.shapesList.map((points, index) => {
@@ -201,7 +217,7 @@ class ShapeCanvas extends Component {
                                             snapToGrid={this.snapToGrid}
                                             isSelected={index === this.state.selectedShapeIndex}
                                             activeTool={this.props.activeTool}
-                                            autoQuantizeIsActive={this.props.autoQuantizeIsActive}
+                                            isAutoQuantizeActive={this.props.isAutoQuantizeActive}
                                             colorsList={this.props.colorsList}
                                             colorIndex={this.props.colorIndex}
 
@@ -292,7 +308,3 @@ class PhantomShape extends Component {
 
 
 export default ShapeCanvas
-
-function dist(x0,y0,x1,y1) {
-    return Math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0));
-}
