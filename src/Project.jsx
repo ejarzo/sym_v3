@@ -56,6 +56,11 @@ const scalesList = [
     {value: "wholetone", label: "Wholetone"}
 ];
 
+const instNamesList = [
+    {value: "keys", label: "Keys"},
+    {value: "duo", label: "Duo"},
+];
+
 /* ========================================================================== */
 
 class Project extends Component {
@@ -112,7 +117,6 @@ class Project extends Component {
     }
 
     componentDidMount () {
-        console.log(document.getElementById("holder").style.width)
     }
 
     componentWillUnmount() {
@@ -251,7 +255,6 @@ class Project extends Component {
 
         return (
             <Fullscreen
-
                 enabled={this.state.isFullscreenEnabled}
                 onChange={isFullscreenEnabled => this.setState({isFullscreenEnabled})}>
 
@@ -438,16 +441,9 @@ class Project extends Component {
                             </button>
                         </div>
                     </div>
+                
                 </div>
                 
-                <div className="inst-selectors">
-                    <ul className="inst-list">
-                        <InstColorController />
-                        <InstColorController />
-                        <InstColorController />
-                        <InstColorController />
-                    </ul>
-                </div>
                 {/* The Canvas */}
                 <ShapeCanvas
                     ref={(c) => this.shapeCanvas = c}
@@ -462,6 +458,22 @@ class Project extends Component {
                     isGridActive={this.state.isGridActive}
                     isSnapToGridActive={this.state.isSnapToGridActive}
                 />
+                
+                {/* Instrument controller panels */}
+                <div className="inst-selectors">
+                    <ul className="inst-list">
+                        {colorsList.map((color, i) => {
+                            return (
+                                <InstColorController 
+                                    key={i}
+                                    instNamesList={instNamesList}
+                                    color={color}
+                                />
+                            )
+                        })}
+                    </ul>
+                </div>
+
             </Fullscreen>        
         );
     }

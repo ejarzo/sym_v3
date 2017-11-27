@@ -104,7 +104,7 @@ class ShapeCanvas extends Component {
                     })
                 }
             }
-        } 
+        }
         // right click to cancel shape mid-draw
         else if (e.evt.which === 3) {
             if (this.state.drawingState !== 'pending') {

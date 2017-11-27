@@ -199,54 +199,86 @@ button
 
 .inst-selectors
     position: absolute
-    height: 92px
+    height: 290px
     bottom: 0
     left: 0
     right: 0
-    z-index: 100
-    //height: 92px
-    //width: 100%
-    background: #ddd
+    pointer-events: none
     ul.inst-list
         overflow-x: scroll
-        overflow-y: hidden
+        overflow-y: auto
         white-space: nowrap
         height: 100%
-        font-size: 0
         &::-webkit-scrollbar
             display: none
+        
         li.inst-option
+            pointer-events: auto
+            position: relative
+            top: calc(100% - 88px)
             background: #ccc
             text-align: center
             width: 25%
-            height: 100%
+            //height: 100%
             font-size: 12px
             display: inline-block
-            text-transform: capitalize
-            vertical-align: middle
             color: $color-white
             .inst-title
                 background: #aaa
-                height: 22px
+                height: 21px
                 text-align: left
+                position: relative
+                
                 .inst-select
-                    width: 50%
-                i
-                    @include button_expand_on_hover
-                    color: $color-white !important
-                    padding-right: 3px
-                    font-size: 18px
                     position: relative
-                    top: -2px
-                    display: block
-                    width: 13px
-                button
-                    float: right
-                    &.mute-solo-channel
-                        &:active
-                            background: #fff    
-                            color: #222
+                    top: 2px
+                    left: 0
+                    width: 100%
+                    background: none
+                    color: #fff
+                    border: none
+                    box-shadow: none !important
+                    &.is-open
+                        position: relative
+                        z-index: 1000
+                        .Select-arrow
+                            border-bottom-color: #fff
+                    .Select-value-label
+                        color: #fff
+                        padding-left: 2px
+                    .Select-input
+                        color: #fff
 
+                    .Select-menu-outer
+                        top: auto
+                        bottom: calc(100% + 2px)
+                        border: none
+                        //padding: 0 8px
+                        div
+                            background: none
+                            color: #fff
+                        .Select-option
+                            padding-left: 8px
+                            &.is-selected
+                                background-color: rgba(255,255,255,0.4) !important
+                                div, span
+                                    background: none !important
+                                    color: #fff !important
+
+                            &.is-focused
+                                background-color: rgba(255,255,255,0.2) !important
+                                div, span
+                                    background: none !important
+                                    color: #fff !important
+                    .Select-placeholder
+                        color: #ddd
+                    .Select-control
+                        background: none
+                        border: none
+                        position: relative
+                    .Select-arrow
+                        border-top-color: #fff
+                        
             .inst-params
                 height: 100%
                 li

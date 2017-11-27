@@ -6,7 +6,7 @@ class Knob extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            value: 50
+            value: props.value
         };
 
         this.knobRadius = 15;
@@ -23,11 +23,6 @@ class Knob extends Component {
 
         this.handleDragStart = this.handleDragStart.bind(this);
         this.handleDrag = this.handleDrag.bind(this);
-        this.handleDragStop = this.handleDragStop.bind(this);
-    }
-
-    componentDidMount () {
-        //document.getElementById("arc1").setAttribute("d", describeArc(this.knobRadius + this.knobStrokeWidth, this.knobRadius + this.knobStrokeWidth, this.knobRadius, this.startAngle, this.endAngle));
     }
 
     handleDragStart (e) {
@@ -40,6 +35,8 @@ class Knob extends Component {
     };
 
     handleDrag (e) {
+        // TODO add horizontal drag
+
         console.log(e.movementX, e.movementY);
         let xDiff = (e.clientX - this.dragStart.x);
         let yDiff = (e.clientY - this.dragStart.y) * -1;
@@ -47,30 +44,19 @@ class Knob extends Component {
         console.log("drag", xDiff, yDiff);
         
         let newVal = this.dragStart.value + yDiff;
-        // if (Math.abs(e.movementX) > Math.abs(e.movementY)) {
-        //     newVal = this.dragStart.value + xDiff;
-        // } else {
-        //     newVal = this.dragStart.value + yDiff;
-        // }
-
+    
         if (newVal > 100) {
             newVal = 100;
         }
         if (newVal < 0) {
             newVal = 0
         }
-
+        
+        this.props.onChange(newVal);
         this.setState({
             value: newVal
         })
     };    
-    
-    handleDragStop (e) {
-        // this.dragStart = {
-        //     x: e.clientX,
-        //     y: e.clientY
-        // }
-    };
     
     render() {
         const svgStyle = {
@@ -112,7 +98,7 @@ class Knob extends Component {
                                     this.knobRadius + this.knobStrokeWidth, 
                                     this.knobRadius, 
                                     this.startAngle, 
-                                    Utils.convertValToRange(this.state.value, 0, 100, this.startAngle, this.endAngle))}
+                                    Utils.convertValToRange(this.props.value, 0, 100, this.startAngle, this.endAngle))}
                             />
                         </svg>
                       
