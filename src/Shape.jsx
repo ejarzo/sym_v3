@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
 import Portal from 'react-portal';
 import Utils from './Utils.js';
-
 import Color from 'color';
+import Tone from 'tone';
+import ReactStateAnimation from 'react-state-animation';
+import Point from 'point-at-length';
 
 import {Group, Line, Circle} from 'react-konva';
 import ShapeEditorPanel from './ShapeEditorPanel.jsx'
@@ -37,10 +39,12 @@ class Shape extends React.Component {
             isHoveredOver: false, 
             editorX: 0,
             editorY: 0,
+            
+            animCircleX: 0,
+            animCircleY: 0
         };
-        
         this.quantizeLength = 700;
-        
+
         // shape attribute changes
         this.handleVolumeChange = this.handleVolumeChange.bind(this)
         this.handleColorChange = this.handleColorChange.bind(this);    
@@ -66,24 +70,175 @@ class Shape extends React.Component {
         this.handleQuantizeClick = this.handleQuantizeClick.bind(this);    
         this.handleQuantizeFactorChange = this.handleQuantizeFactorChange.bind(this);    
         this.handleToTopClick = this.handleToTopClick.bind(this);    
-        this.handleToBottomClick = this.handleToBottomClick.bind(this);    
+        this.handleToBottomClick = this.handleToBottomClick.bind(this);  
+
+        // audio  
+        this.transposeByScaleDegree = this.transposeByScaleDegree.bind(this);  
+
     }
 
-    componentWillReceiveProps(nextProps) {
+    componentWillMount () {
+        this.synth = new Tone.Synth({
+                "portamento": 0,
+                "oscillator": {
+                    "detune": 0,
+                    "type": "custom",
+                    "partials" : [2, 1, 2, 2],
+                    "phase": 0,
+                    "volume": -6
+                },
+                "envelope": {
+                    "attack": 0.005,
+                    "decay": 0.3,
+                    "sustain": 0.2,
+                    "release": 1,
+                }
+            }).toMaster();
+        
+        this.synth.volume.value = this.state.volume;
+
+        this.part = new Tone.Part((time, val) => {
+            //console.log("Playing note", val.note, "for", val.duration, "INDEX:", val.pIndex);            
+            const dur = val.duration / this.part.playbackRate;
+
+            // animation
+            Tone.Draw.schedule(() => {
+                const xFrom = this.state.points[val.pIndex-2];
+                const yFrom = this.state.points[val.pIndex-1];
+                const xTo = val.pIndex >= this.state.points.length ? this.state.points[0] : this.state.points[val.pIndex];
+                const yTo = val.pIndex >= this.state.points.length ? this.state.points[1] : this.state.points[val.pIndex+1];
+                
+                if (this.animCircle) {
+                    // TODO smooth animations...
+
+                    const shapeFill = this.shapeElement.getAttr("fill");
+                    this.shapeElement.setAttrs({
+                        fill: "#FFF",
+                    });
+                    this.shapeElement.to({
+                        fill: shapeFill,
+                        duration: 0.2
+                    });
+
+                    this.animCircle.setAttrs({
+                        x: xFrom,
+                        y: yFrom,
+                        fill: "#FFF",
+                        radius: 8
+                    });
+                    this.animCircle.to({
+                        x: xTo,
+                        y: yTo,
+                        duration: dur
+                    });
+                    this.animCircle.to({
+                        radius: 5,
+                        fill: this.props.colorsList[this.state.colorIndex],
+                        duration: 0.3
+                    });
+                }
+            }, time)
+
+            // trigger synth
+            this.synth.triggerAttackRelease(val.note, dur, time);
+        }, []).start(0);
+
+        this.part.loop = true;
+        this.part.playbackRate = this.props.tempo/50;
+
+        // TODO ugly
+        if (this.props.isAutoQuantizeActive) {
+            const newPoints = this.setPerimeterLength(this.state.points, this.quantizeLength * this.state.quantizeFactor);
+            this.setNoteEvents(this.props.scaleObj, newPoints);
+            this.setState({
+                points: newPoints
+            })
+        } else {
+            this.setNoteEvents(this.props.scaleObj, this.state.points);
+        }
+
+    }
+
+    componentWillUnmount () {
+        this.part.dispose();
+        this.synth.dispose();
+    }
+    
+    setNoteEvents (scaleObj, points) {
+        this.part.removeAll();
+        
+        let delay = 0;
+        //const tempoModifier = this.props.tempo * 3 + 20;
+        const tempoModifier = 200;
+
+        this.forEachPoint(points, (p, i) => {
+            if (i >= 2) {
+                const prevX = points[i-2];
+                const prevY = points[i-1];
+                const edgeLength = Utils.dist(p.x, p.y, prevX, prevY) / tempoModifier;
+                
+                const noteVal = this.transposeByScaleDegree(1, parseInt(Math.random() * 10 - 5), scaleObj);
+                const noteInfo = {
+                    duration: edgeLength, 
+                    note: noteVal,
+                    pIndex: i
+                }
+                //console.log(noteInfo)
+                this.part.add(delay, noteInfo);
+                delay += edgeLength;
+            }
+        })
+
+        // last edge
+        const n = points.length;
+        const lastEdgeLength = Utils.dist(points[0], points[1], points[n-2], points[n-1]);
+
+        const lastNoteInfo = {
+            duration: lastEdgeLength / tempoModifier, 
+            note: this.transposeByScaleDegree(1, -1, scaleObj),
+            pIndex: n
+        }
+        console.log("last note:", lastNoteInfo)
+        this.part.add(delay, lastNoteInfo)
+        this.part.loopEnd = delay + lastNoteInfo.duration;
+    }
+
+    componentWillReceiveProps (nextProps) {
         if (nextProps.activeTool === 'draw') {
             this.setState({
                 isHoveredOver: false
             })
         }
 
-        if (nextProps.isAutoQuantizeActive) {
+        if (nextProps.isAutoQuantizeActive && nextProps.isAutoQuantizeActive !== this.props.isAutoQuantizeActive) {
+            const newPoints = this.setPerimeterLength(this.state.points, this.quantizeLength * this.state.quantizeFactor);
+            this.setNoteEvents(nextProps.scaleObj, newPoints);
             this.setState({
-                points: this.setPerimeterLength(this.state.points, this.quantizeLength * this.state.quantizeFactor)
+                points: newPoints
             })
-            
+        }
+
+        /* update note events if new scale or new tonic */
+        if (this.props.scaleObj.name !== nextProps.scaleObj.name || 
+                this.props.scaleObj.tonic.toString() !== nextProps.scaleObj.tonic.toString()) {
+            this.setNoteEvents(nextProps.scaleObj, this.state.points)
+        }
+
+        /* on tempo update */
+        if (this.props.tempo !== nextProps.tempo) {
+            this.part.playbackRate = nextProps.tempo/50;
+            //this.setNoteEvents(nextProps.scaleObj, this.state.points)
         }
     }
+    
+    /* ================================ AUDIO =============================== */
 
+    transposeByScaleDegree (currIndex, degree, scaleObj) {
+        const newDegree = degree + currIndex;
+        const newNote = scaleObj.get(newDegree).toString();
+        //console.log(newNote);
+        return newNote;
+    }
 
     /* ============================== HANDLERS ============================== */
 
@@ -120,6 +275,7 @@ class Shape extends React.Component {
             y: this.props.snapToGrid(pos.y)
         };
     }
+
     handleMouseOver (e) {
         this.setState({
             isHoveredOver: true
@@ -145,6 +301,7 @@ class Shape extends React.Component {
 
     /* --- Volume --- */
     handleVolumeChange (val) {
+        this.synth.volume.value = val;
         this.setState({
             volume: val
         });
@@ -158,8 +315,13 @@ class Shape extends React.Component {
 
     /* --- Quantization --- */
     handleQuantizeClick () {
+        const newPoints = this.setPerimeterLength(
+                                this.state.points, 
+                                this.quantizeLength * this.state.quantizeFactor);
+        this.setNoteEvents(this.props.scaleObj, newPoints);
+
         this.setState({
-            points: this.setPerimeterLength(this.state.points, this.quantizeLength * this.state.quantizeFactor)
+            points: newPoints
         })
     }
 
@@ -170,9 +332,12 @@ class Shape extends React.Component {
                 const newPerim = this.props.isAutoQuantizeActive ? 
                                     factor * this.state.quantizeFactor * this.quantizeLength :
                                     this.getTotalLength(this.state.points) * factor
-                    
+                const newPoints = this.setPerimeterLength(this.state.points, newPerim);
+                
+                this.setNoteEvents(this.props.scaleObj, newPoints);
+                
                 this.setState({
-                    points: this.setPerimeterLength(this.state.points, newPerim),
+                    points: newPoints,
                     quantizeFactor: factor * this.state.quantizeFactor
                 })
             }
@@ -204,7 +369,7 @@ class Shape extends React.Component {
    
     /* --- Vertices --------------------------------------------------------- */
 
-    handleVertexDragMove(i) {
+    handleVertexDragMove (i) {
         return (e) => {
             const pos = e.target.position();
             let points = this.state.points.slice();
@@ -215,6 +380,8 @@ class Shape extends React.Component {
                 points = this.setPerimeterLength(points, this.quantizeLength * this.state.quantizeFactor);
             }
 
+            this.setNoteEvents(this.props.scaleObj, points);
+            
             this.setState({
                 points: points
             })
@@ -272,7 +439,7 @@ class Shape extends React.Component {
         return newPoints;
     }
 
-    forEachPoint(points, callback) {
+    forEachPoint (points, callback) {
         for (var i = 0; i < points.length; i += 2) {
             let p = {
                 x: points[i],
@@ -281,12 +448,15 @@ class Shape extends React.Component {
             callback(p, i)
         }
     }
+
     /* =============================== RENDER =============================== */
 
     render () {
         const color = this.props.colorsList[this.state.colorIndex];
         const isEditMode = this.props.activeTool === 'edit';
         const alphaAmount = this.props.isSelected ? 0.8 : 0.4;
+        
+        console.log(this.part.progress);
         
         const attrs = {
             strokeWidth: isEditMode ? (this.state.isHoveredOver ? 4 : 2) : 2,
@@ -296,6 +466,18 @@ class Shape extends React.Component {
         }
 
         const perimeter = this.getTotalLength(this.state.points);
+        
+        const animCircle = this.props.isPlaying ? (
+                <Circle
+                    ref={c => this.animCircle = c}
+                    x={-999}
+                    y={-999}
+                    radius={6}
+                    strokeWidth={2}
+                    stroke={color}
+                    fill={color}>
+                </Circle>
+            ) : null;
 
         // show vertex handles if in edit mode, allow dragging to reshape
         if (isEditMode) {
@@ -308,7 +490,7 @@ class Shape extends React.Component {
                     onDragStart={this.handleDragStart}
                     onDragEnd={this.handleDragEnd}
                     opacity={attrs.opacity}>
-                    
+                                        
                     <Line
                         ref={c => this.shapeElement = c}
                         points={this.state.points}
@@ -340,6 +522,8 @@ class Shape extends React.Component {
                             return null
                         }
                     })}
+
+                    {animCircle}
 
                     <Portal isOpened={this.props.isSelected}> 
                         <ShapeEditorPanel
@@ -393,7 +577,7 @@ class Shape extends React.Component {
                         stroke={color}
                         strokeWidth={attrs.strokeWidth}
                         closed={true}/>
-                    
+                   
                     <ShapeVertex 
                         index={0}
                         color={color}
@@ -402,6 +586,9 @@ class Shape extends React.Component {
                             y: this.state.points[1]
                         }}
                         onVertexDragMove={this.handleVertexDragMove(0)}/>
+
+                    {animCircle}
+
                 </Group>
             );
         }
@@ -416,7 +603,7 @@ export default Shape
     The shape's vertecies. Can be dragged to edit the shape.
 */
 class ShapeVertex extends Component {
-    constructor(props) {
+    constructor (props) {
         super(props);
 
         const luminosity = Color(props.color).luminosity();

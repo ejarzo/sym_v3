@@ -4,7 +4,7 @@ import Knob from './Knob.js';
 import Color from 'color';
 
 class InstColorController extends Component {
-    constructor(props) {
+    constructor (props) {
         super(props);
 
         this.state = {
@@ -50,7 +50,7 @@ class InstColorController extends Component {
         }
     }
 
-    render() {
+    render () {
         const titleBackgroundColor = this.props.color;
         const contentBackgroundColor = Color(this.props.color).lighten(0.1);
       

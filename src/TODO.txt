@@ -1,0 +1,13 @@
+TODO
+
+- scrolling on instrument editor panels
+- shape animation based on state
+- note chooser
+- key press weirdness
+- panning, effects
+- animCircles briefly flash at top when playback starts - due to playback delay
+- smooth tempo transition
+- perfect loops when quantized
+- z-index fixing
+- colors on animation fix
+- two points at same coordinate cause animation glitch

@@ -23,6 +23,17 @@ const defaultState = {
     scale: "major"
 }
 
+/*
+    Component Architecture:
+        App
+            Project
+                ShapeCanvas
+                    Shape
+                        ShapeEditorPanel
+                InstColorController
+                    Knob
+*/
+
 class App extends Component {
     render() {
         return (

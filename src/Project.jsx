@@ -4,6 +4,7 @@ import Teoria from 'teoria';
 import Select from 'react-select';
 import NumericInput from 'react-numeric-input';
 import Fullscreen from 'react-full-screen';
+import Tone from 'tone';
 
 import ShapeCanvas from './ShapeCanvas.jsx';
 import InstColorController from './InstColorController.js';
@@ -12,6 +13,7 @@ import drawIcon from './img/draw-icon.svg'
 import editIcon from './img/edit-icon.svg'
 import drawIconWhite from './img/draw-icon-white.svg'
 import editIconWhite from './img/edit-icon-white.svg'
+
 /* ========================================================================== */
 
 const colorsList = [
@@ -65,7 +67,7 @@ const instNamesList = [
 
 class Project extends Component {
   
-    constructor(props) {
+    constructor (props) {
         super(props);
 
         this.state = {
@@ -112,14 +114,14 @@ class Project extends Component {
     
     /* ============================= LIFECYCLE ============================== */
 
-    componentWillMount(){
+    componentWillMount (){
         document.addEventListener("keydown", this.handleKeyDown.bind(this));
     }
 
     componentDidMount () {
     }
 
-    componentWillUnmount() {
+    componentWillUnmount () {
         document.removeEventListener("keydown", this.handleKeyDown.bind(this));
     }
 
@@ -128,6 +130,11 @@ class Project extends Component {
     /* --- Transport -------------------------------------------------------- */
 
     handlePlayClick () {
+        if (this.state.isPlaying) {
+            this.stop();
+        } else {
+            this.play();
+        }
         this.setState((prevState) => ({
             isPlaying: !prevState.isPlaying
         }));
@@ -192,6 +199,14 @@ class Project extends Component {
     }
 
     /* --- Musical ---------------------------------------------------------- */
+    
+    play () {
+        Tone.Transport.start("+0.1");
+    }
+
+    stop () {
+        Tone.Transport.stop();
+    }
 
     handleTempoChange (val) {
         this.setState({
@@ -206,10 +221,12 @@ class Project extends Component {
     }
 
     handleScaleChange (val) {
-        const tonic = this.state.scaleObj.tonic;
-        this.setState({
-            scaleObj: tonic.scale(val.value),
-        })
+        if (val) {
+            const tonic = this.state.scaleObj.tonic;
+            this.setState({
+                scaleObj: tonic.scale(val.value),
+            })
+        }
     }
 
     handleClearButtonClick () {
@@ -218,12 +235,17 @@ class Project extends Component {
 
     /* --- Keyboard Shortcuts ----------------------------------------------- */
 
-    handleKeyDown(event) {
+    handleKeyDown (event) {
         console.log(event.key);
-        
+        /* Space toggles play */
+        if(event.key === ' ') {
+            //event.preventDefault(); // stop from clicking focused buttons
+            this.handlePlayClick();
+        }
+
         /* tab toggles active tool */
         if(event.key === 'Tab') {
-            event.preventDefault();
+            event.preventDefault(); 
             this.toggleActiveTool();
         }
         
@@ -249,7 +271,7 @@ class Project extends Component {
 
     /* =============================== RENDER =============================== */
 
-    render() {    
+    render () {    
         const playButtonClass = this.state.isPlaying ? "ion-stop" : "ion-play";
         const fullscreenButtonClass = this.state.isFullscreenEnabled ? "ion-arrow-shrink" : "ion-arrow-expand";
 
@@ -451,7 +473,10 @@ class Project extends Component {
                     colorIndex={this.state.activeColorIndex}
                     activeTool={this.state.activeTool}
                     closeColorPicker={this.closeColorPicker}
+                    
                     isAutoQuantizeActive={this.state.isAutoQuantizeActive}
+                    isPlaying={this.state.isPlaying}
+                    scaleObj={this.state.scaleObj}
                     tempo={this.state.tempo}
                     quantizeLength={this.state.quantizeLength}
 
@@ -479,8 +504,11 @@ class Project extends Component {
     }
 }
 
+/*
+    A dropdown used to select the draw color.
+*/
 class ColorPicker extends Component {
-    constructor(props) {
+    constructor (props) {
         super(props);
         this.state = {
             isOpen: false

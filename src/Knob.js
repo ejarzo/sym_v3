@@ -3,7 +3,7 @@ import Utils from './Utils.js';
 import Draggable from 'react-draggable';
 
 class Knob extends Component {
-    constructor(props) {
+    constructor (props) {
         super(props);
         this.state = {
             value: props.value
@@ -58,14 +58,14 @@ class Knob extends Component {
         })
     };    
     
-    render() {
+    render () {
         const svgStyle = {
             height: 2 * (this.knobRadius + this.knobStrokeWidth),
             width: 2 * (this.knobRadius + this.knobStrokeWidth),
         }
         return (
             <div>   
-                <div className="knob-container">
+                <div className="knob-container" tabIndex="0">
                     <Draggable
                         axis="both"
                         position={{x:0, y:0}}
@@ -73,8 +73,8 @@ class Knob extends Component {
                         onStart={this.handleDragStart}
                         onDrag={this.handleDrag}
                         onStop={this.handleDragStop}>
-                        
                         <svg style={svgStyle} className="expand-on-hover">
+                            
                             {/* background static arc */}
                             <path 
                                 fill="none"
@@ -101,7 +101,6 @@ class Knob extends Component {
                                     Utils.convertValToRange(this.props.value, 0, 100, this.startAngle, this.endAngle))}
                             />
                         </svg>
-                      
                      </Draggable>
                 </div>
                 <span className="inst-param-title">{this.props.paramName}</span>

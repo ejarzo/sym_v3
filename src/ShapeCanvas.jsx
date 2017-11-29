@@ -24,6 +24,7 @@ class ShapeCanvas extends Component {
         }
         
         this.originLockRadius = 15;
+        this.gridDots = this.createGrid();
 
         this.handleClick = this.handleClick.bind(this);
         this.handleMouseMove = this.handleMouseMove.bind(this);
@@ -35,7 +36,7 @@ class ShapeCanvas extends Component {
         this.clearAll = this.clearAll.bind(this);
     }
     
-    componentWillReceiveProps(nextProps) {
+    componentWillReceiveProps (nextProps) {
         if (nextProps.activeTool === 'draw') {
             this.setState({
                 selectedShapeIndex: -1
@@ -43,7 +44,7 @@ class ShapeCanvas extends Component {
         }
     }
     
-    appendShape() {
+    appendShape () {
         let shapesList = this.state.shapesList.slice();
         const points = this.state.currPoints.slice();
         shapesList.push(points);
@@ -78,6 +79,7 @@ class ShapeCanvas extends Component {
     /* ============================== HANDLERS ============================== */
         
     handleMouseDown () {
+        document.activeElement.blur();
         this.setState({
             selectedShapeIndex: -1
         })
@@ -179,15 +181,15 @@ class ShapeCanvas extends Component {
 
     snapToGrid (point) {
         return this.props.isSnapToGridActive ? 
-                    Math.round(point / this.state.gridSize) * this.state.gridSize : point;
+                    Math.round(point / this.state.gridSize) * this.state.gridSize : 
+                    Math.round(point / 1) * 1;
     }
 
     /* =============================== RENDER =============================== */
 
-    render() {
-        // TODO not every render ?
-        const gridDots = this.props.isGridActive ? this.createGrid() : null;
-        //console.log("canvas render");
+    render () {
+        const gridDots = this.props.isGridActive ? this.gridDots : null;
+
         return (
             <div id="holder" onContextMenu={(e) => {e.preventDefault();}}>
                 <Stage 
@@ -215,9 +217,13 @@ class ShapeCanvas extends Component {
                                             points={points}
                                             
                                             snapToGrid={this.snapToGrid}
-                                            isSelected={index === this.state.selectedShapeIndex}
                                             activeTool={this.props.activeTool}
+                                            
+                                            scaleObj={this.props.scaleObj}
+                                            isPlaying={this.props.isPlaying}
+                                            isSelected={index === this.state.selectedShapeIndex}
                                             isAutoQuantizeActive={this.props.isAutoQuantizeActive}
+                                            
                                             colorsList={this.props.colorsList}
                                             colorIndex={this.props.colorIndex}
 
@@ -247,6 +253,8 @@ class ShapeCanvas extends Component {
         );
     }
 }
+
+export default ShapeCanvas
 
 /*
     Used to show the shape that is currently being drawn. 
@@ -305,6 +313,3 @@ class PhantomShape extends Component {
         }
     }
 }
-
-
-export default ShapeCanvas

@@ -220,7 +220,10 @@ button:active {
           padding-right: 10px;
           padding-left: 10px; }
           .inst-selectors ul.inst-list li.inst-option .inst-params li .knob-container {
+            border: 1px solid transparent;
             padding-top: 7px; }
+            .inst-selectors ul.inst-list li.inst-option .inst-params li .knob-container:focus {
+              outline: none; }
           .inst-selectors ul.inst-list li.inst-option .inst-params li .expand-on-hover {
             transition: all 0.1s ease-in-out;
             color: #777;
