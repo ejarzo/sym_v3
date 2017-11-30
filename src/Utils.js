@@ -17,6 +17,24 @@ const Utils = {
 
     convertValToRange: (oldVal, oldMin, oldMax, newMin, newMax) => {
         return (((oldVal - oldMin) * (newMax - newMin)) / (oldMax - oldMin)) + newMin
+    },
+
+    getAngle: (p1, p2, p3) => {
+        var p12 = Math.sqrt(Math.pow((p1.x - p2.x),2) + Math.pow((p1.y - p2.y),2));
+        var p13 = Math.sqrt(Math.pow((p1.x - p3.x),2) + Math.pow((p1.y - p3.y),2));
+        var p23 = Math.sqrt(Math.pow((p2.x - p3.x),2) + Math.pow((p2.y - p3.y),2));
+
+        //angle in radians
+        //var resultRadian = Math.acos(((Math.pow(p12, 2)) + (Math.pow(p13, 2)) - (Math.pow(p23, 2))) / (2 * p12 * p13));
+
+        //angle in degrees
+        var resultDegree = Math.acos(((Math.pow(p12, 2)) + (Math.pow(p13, 2)) - (Math.pow(p23, 2))) / (2 * p12 * p13)) * 180 / Math.PI;
+
+        return resultDegree;
+    },
+
+    isBetween: (val, a, b) => {
+        return (val >= a && val <= b);
     }
 }
 

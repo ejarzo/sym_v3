@@ -3,8 +3,6 @@ import Portal from 'react-portal';
 import Utils from './Utils.js';
 import Color from 'color';
 import Tone from 'tone';
-import ReactStateAnimation from 'react-state-animation';
-import Point from 'point-at-length';
 
 import {Group, Line, Circle} from 'react-konva';
 import ShapeEditorPanel from './ShapeEditorPanel.jsx'
@@ -35,6 +33,8 @@ class Shape extends React.Component {
             volume: -5,
             isMuted: false,
             quantizeFactor: 1,
+            
+            firstNoteIndex: 1,
 
             isHoveredOver: false, 
             editorX: 0,
@@ -100,7 +100,7 @@ class Shape extends React.Component {
         this.part = new Tone.Part((time, val) => {
             //console.log("Playing note", val.note, "for", val.duration, "INDEX:", val.pIndex);            
             const dur = val.duration / this.part.playbackRate;
-
+            
             // animation
             Tone.Draw.schedule(() => {
                 const xFrom = this.state.points[val.pIndex-2];
@@ -111,7 +111,7 @@ class Shape extends React.Component {
                 if (this.animCircle) {
                     // TODO smooth animations...
 
-                    const shapeFill = this.shapeElement.getAttr("fill");
+                    const shapeFill = this.getFillColor();
                     this.shapeElement.setAttrs({
                         fill: "#FFF",
                     });
@@ -138,9 +138,10 @@ class Shape extends React.Component {
                     });
                 }
             }, time)
-
+            
+            const noteString = this.props.scaleObj.get(val.noteIndex).toString();
             // trigger synth
-            this.synth.triggerAttackRelease(val.note, dur, time);
+            this.synth.triggerAttackRelease(noteString, dur, time);
         }, []).start(0);
 
         this.part.loop = true;
@@ -160,6 +161,8 @@ class Shape extends React.Component {
     }
 
     componentWillUnmount () {
+        // todo mouse hover causes update to unmounted component
+        this.shapeElement.destroy();
         this.part.dispose();
         this.synth.dispose();
     }
@@ -168,41 +171,107 @@ class Shape extends React.Component {
         this.part.removeAll();
         
         let delay = 0;
-        //const tempoModifier = this.props.tempo * 3 + 20;
-        const tempoModifier = 200;
+
+        let prevNoteIndex = this.state.firstNoteIndex;
 
         this.forEachPoint(points, (p, i) => {
             if (i >= 2) {
-                const prevX = points[i-2];
-                const prevY = points[i-1];
-                const edgeLength = Utils.dist(p.x, p.y, prevX, prevY) / tempoModifier;
-                
-                const noteVal = this.transposeByScaleDegree(1, parseInt(Math.random() * 10 - 5), scaleObj);
-                const noteInfo = {
-                    duration: edgeLength, 
-                    note: noteVal,
-                    pIndex: i
-                }
-                //console.log(noteInfo)
+                const noteInfo = this.getNoteInfo(points, scaleObj, i, i-2, i-4, prevNoteIndex);
                 this.part.add(delay, noteInfo);
-                delay += edgeLength;
+                delay += noteInfo.duration;
+                prevNoteIndex = noteInfo.noteIndex;
             }
         })
 
         // last edge
         const n = points.length;
-        const lastEdgeLength = Utils.dist(points[0], points[1], points[n-2], points[n-1]);
+        const lastNoteInfo = this.getNoteInfo(points, scaleObj, 0, n-2, n-4, prevNoteIndex);
 
-        const lastNoteInfo = {
-            duration: lastEdgeLength / tempoModifier, 
-            note: this.transposeByScaleDegree(1, -1, scaleObj),
-            pIndex: n
-        }
-        console.log("last note:", lastNoteInfo)
         this.part.add(delay, lastNoteInfo)
         this.part.loopEnd = delay + lastNoteInfo.duration;
     }
 
+    getNoteInfo (points, scaleObj, i, iPrev, iPrevPrev, prevNoteIndex) {
+        const tempoModifier = 200;
+        
+        const p = {
+            x: points[i],
+            y: points[i+1]
+        }
+        const prev = {
+            x: points[iPrev],
+            y: points[iPrev+1]
+        }
+        const prevPrev = {
+            x: points[iPrevPrev],
+            y: points[iPrevPrev+1]
+        }
+        
+        const edgeLength = Utils.dist(p.x, p.y, prev.x, prev.y) / tempoModifier;
+        //const theta = Utils.getAngle(prev, p, prevPrev);
+        
+        const v1 = [p.x - prev.x, p.y - prev.y];
+        const v2 = [prev.x - prevPrev.x, prev.y - prevPrev.y];
+
+        const atanA = Math.atan2(p.x - prev.x, p.y - prev.y);
+        const atanC = Math.atan2(prevPrev.x - prev.x, prevPrev.y - prev.y);
+        
+        let diff = atanA - atanC;
+
+        //if (diff > Math.PI) diff -=  Math.PI;
+        //else if (diff < -1 * Math.PI) diff +=  Math.PI;
+        
+        diff = diff * 180 / Math.PI;
+        console.log(diff);
+        //      double atanA = atan2(A.x - B.x, A.y - B.y);
+        //      double atanC = atan2(C.x - B.x, C.y - B.y);
+        //      double diff = atanC - atanA;
+        
+        const degreeDiff = this.thetaToScaleDegree (diff, scaleObj);
+        const noteIndex = prevNoteIndex + degreeDiff;
+        return {
+            duration: edgeLength, 
+            noteIndex: noteIndex,
+            pIndex: i === 0 ? points.length : i
+        }
+    }
+
+    thetaToScaleDegree (theta, scaleObj) {
+        if (theta < 0) {
+            theta = theta + 360;
+        }
+
+        if (theta > 180) {
+            theta = theta - 360;
+        }
+        var negMult = 1;
+        if (theta < 0) {
+            negMult = -1;
+        }
+        var absTheta = Math.abs(theta);
+        //console.log("THETA")
+        // find sector
+        var notesInScale = scaleObj.simple().length - 1;
+        var changeInScaleDegree = 0;
+        var dTheta = 180 / notesInScale;
+        var lowerBound = 0;
+        var upperBound = dTheta;
+        
+        let newIndex = 0;
+        for (var i = notesInScale; i > 0; i--) {
+            if(Utils.isBetween(absTheta, lowerBound, upperBound)) {
+                console.log("THETA:", absTheta);
+                console.log("IN THIS SECTOR:", i);
+                console.log("IS LEFT TURN: ", negMult < 0 ? "YES" : "NO");
+                
+                newIndex = i * negMult;
+                break;
+            }
+            lowerBound = upperBound;
+            upperBound += dTheta;
+        }
+        return newIndex;
+    }
     componentWillReceiveProps (nextProps) {
         if (nextProps.activeTool === 'draw') {
             this.setState({
@@ -276,7 +345,7 @@ class Shape extends React.Component {
         };
     }
 
-    handleMouseOver (e) {
+    handleMouseOver () {
         this.setState({
             isHoveredOver: true
         })
@@ -315,11 +384,10 @@ class Shape extends React.Component {
 
     /* --- Quantization --- */
     handleQuantizeClick () {
-        const newPoints = this.setPerimeterLength(
-                                this.state.points, 
+        const newPoints = this.setPerimeterLength(this.state.points, 
                                 this.quantizeLength * this.state.quantizeFactor);
+        
         this.setNoteEvents(this.props.scaleObj, newPoints);
-
         this.setState({
             points: newPoints
         })
@@ -390,6 +458,12 @@ class Shape extends React.Component {
 
     /* --- Helper ----------------------------------------------------------- */
 
+    getFillColor () {
+        const color = this.props.colorsList[this.state.colorIndex];
+        const alphaAmount = this.props.isSelected ? 0.8 : 0.4;
+        return Color(color).alpha(alphaAmount).toString();
+    }
+
     getTotalLength (points) {
         let len = 0;
         const n = points.length;
@@ -454,14 +528,10 @@ class Shape extends React.Component {
     render () {
         const color = this.props.colorsList[this.state.colorIndex];
         const isEditMode = this.props.activeTool === 'edit';
-        const alphaAmount = this.props.isSelected ? 0.8 : 0.4;
-        
-        console.log(this.part.progress);
-        
         const attrs = {
             strokeWidth: isEditMode ? (this.state.isHoveredOver ? 4 : 2) : 2,
             stroke: color,
-            fill: Color(color).alpha(alphaAmount).toString(),
+            fill: this.getFillColor(),
             opacity: this.state.isMuted ? 0.2 : 1
         }
 
@@ -557,9 +627,7 @@ class Shape extends React.Component {
 
                         />
                     </Portal>
-
                 </Group>
-
             );
         } else {
             // if not in edit mode, show only the origin point
@@ -588,11 +656,9 @@ class Shape extends React.Component {
                         onVertexDragMove={this.handleVertexDragMove(0)}/>
 
                     {animCircle}
-
                 </Group>
             );
         }
-        
     }
 }
 

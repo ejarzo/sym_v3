@@ -11,3 +11,7 @@ TODO
 - z-index fixing
 - colors on animation fix
 - two points at same coordinate cause animation glitch
+- record to file
+- menus
+- shape points update should update props rather than state, so that shapeCanvas's shapesList can be used to save the project data
+- mute/solo

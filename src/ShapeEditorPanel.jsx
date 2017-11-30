@@ -94,7 +94,6 @@ class ShapeEditorPanel extends Component {
                         </div>
                     </div>
 
-
                     <div className="col col-4 slider-container">
                         <Slider
                             className={"color-"+ this.props.colorIndex}

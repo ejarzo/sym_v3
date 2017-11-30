@@ -118,9 +118,6 @@ class Project extends Component {
         document.addEventListener("keydown", this.handleKeyDown.bind(this));
     }
 
-    componentDidMount () {
-    }
-
     componentWillUnmount () {
         document.removeEventListener("keydown", this.handleKeyDown.bind(this));
     }
@@ -130,11 +127,7 @@ class Project extends Component {
     /* --- Transport -------------------------------------------------------- */
 
     handlePlayClick () {
-        if (this.state.isPlaying) {
-            this.stop();
-        } else {
-            this.play();
-        }
+        Tone.Transport.toggle();
         this.setState((prevState) => ({
             isPlaying: !prevState.isPlaying
         }));
@@ -199,14 +192,6 @@ class Project extends Component {
     }
 
     /* --- Musical ---------------------------------------------------------- */
-    
-    play () {
-        Tone.Transport.start("+0.1");
-    }
-
-    stop () {
-        Tone.Transport.stop();
-    }
 
     handleTempoChange (val) {
         this.setState({
@@ -237,6 +222,7 @@ class Project extends Component {
 
     handleKeyDown (event) {
         console.log(event.key);
+        
         /* Space toggles play */
         if(event.key === ' ') {
             //event.preventDefault(); // stop from clicking focused buttons
