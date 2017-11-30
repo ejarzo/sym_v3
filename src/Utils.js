@@ -18,26 +18,99 @@ const Utils = {
     convertValToRange: (oldVal, oldMin, oldMax, newMin, newMax) => {
         return (((oldVal - oldMin) * (newMax - newMin)) / (oldMax - oldMin)) + newMin
     },
-
+    
+    // shapes 
     getAngle: (p1, p2, p3) => {
-        var p12 = Math.sqrt(Math.pow((p1.x - p2.x),2) + Math.pow((p1.y - p2.y),2));
-        var p13 = Math.sqrt(Math.pow((p1.x - p3.x),2) + Math.pow((p1.y - p3.y),2));
-        var p23 = Math.sqrt(Math.pow((p2.x - p3.x),2) + Math.pow((p2.y - p3.y),2));
+        //const v1 = [p1.x - p2.x, p.y - p2.y];
+        //const v2 = [p2.x - p3.x, p2.y - p3.y];
 
-        //angle in radians
-        //var resultRadian = Math.acos(((Math.pow(p12, 2)) + (Math.pow(p13, 2)) - (Math.pow(p23, 2))) / (2 * p12 * p13));
+        const atanA = Math.atan2(p1.x - p2.x, p1.y - p2.y);
+        const atanC = Math.atan2(p3.x - p2.x, p3.y - p2.y);
+        
+        let diff = atanA - atanC;
+        diff = diff * 180 / Math.PI;
 
-        //angle in degrees
-        var resultDegree = Math.acos(((Math.pow(p12, 2)) + (Math.pow(p13, 2)) - (Math.pow(p23, 2))) / (2 * p12 * p13)) * 180 / Math.PI;
-
-        return resultDegree;
+        return diff;
     },
 
-    isBetween: (val, a, b) => {
-        return (val >= a && val <= b);
+    thetaToScaleDegree: (theta, scaleObj) => {
+        if (theta < 0) {
+            theta = theta + 360;
+        }
+
+        if (theta > 180) {
+            theta = theta - 360;
+        }
+        
+        // right turn or left turn
+        const negMult = theta < 0 ? 1 : -1;
+        const absTheta = Math.abs(theta);
+
+        // find sector
+        const notesInScale = scaleObj.simple().length - 1;
+        const dTheta = 180 / notesInScale;
+        let lowerBound = 0;
+        let upperBound = dTheta;
+        
+        let degreeDiff = 0;
+        for (let i = notesInScale; i > 0; i--) {
+            if(isBetween(absTheta, lowerBound, upperBound)) {
+                degreeDiff = i * negMult;
+                break;
+            }
+            lowerBound = upperBound;
+            upperBound += dTheta;
+        }
+        return degreeDiff;
+    },
+
+    getTotalLength: (points) => {
+        let len = 0;
+        const n = points.length;
+
+        for (let i = 2; i < points.length; i+=2) {
+            const x = points[i];
+            const y = points[i+1];
+            const prevX = points[i-2];
+            const prevY = points[i-1];
+            len += Utils.dist(x,y,prevX,prevY)
+        }
+
+        // last edge
+        len += Utils.dist(points[0], points[1], points[n-2], points[n-1]);
+        return len;
+    },
+
+    getAveragePoint: (points) => {
+        let totalX = 0;
+        let totalY = 0;
+        
+        for (var i = 0; i < points.length; i += 2) {
+            totalX += points[i];
+            totalY += points[i+1];
+        }
+
+        return {
+            x: totalX / (points.length / 2),
+            y: totalY / (points.length / 2)
+        }
+    },
+
+    forEachPoint: (points, callback) => {
+        for (var i = 0; i < points.length; i += 2) {
+            let p = {
+                x: points[i],
+                y: points[i+1]
+            }
+            callback(p, i)
+        }
     }
+
 }
 
+function isBetween (val, a, b) {
+    return (val >= a && val <= b);
+}
 function polarToCartesian (centerX, centerY, radius, angleInDegrees) {
   var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
   return {

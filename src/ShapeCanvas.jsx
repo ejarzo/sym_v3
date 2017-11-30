@@ -22,7 +22,7 @@ class ShapeCanvas extends Component {
             mousePos: {x: 0, y: 0},
             gridSize: 50,
         }
-        
+
         this.originLockRadius = 15;
         this.gridDots = this.createGrid();
 
@@ -36,6 +36,12 @@ class ShapeCanvas extends Component {
         this.clearAll = this.clearAll.bind(this);
     }
     
+    componentDidMount () {
+        // this.setState({
+        //     shapesList: this.generateRandomShapes(10, 20)
+        // })
+    }
+
     componentWillReceiveProps (nextProps) {
         if (nextProps.activeTool === 'draw') {
             this.setState({
@@ -137,11 +143,13 @@ class ShapeCanvas extends Component {
             y = originY;
             drawingState = 'preview';
         }
-
-        this.setState({
-            mousePos: {x: x, y: y},
-            drawingState: drawingState
-        })
+        
+        if (this.props.activeTool === 'draw') {
+            this.setState({
+                mousePos: {x: x, y: y},
+                drawingState: drawingState
+            })
+        }
     }
 
     handleShapeClick (index) {
@@ -185,6 +193,26 @@ class ShapeCanvas extends Component {
                     Math.round(point / 1) * 1;
     }
 
+    /* =============================== TESTING ============================== */
+
+    generateRandomShapes (nShapes, nPoints) {
+        let shapesList = [];
+
+        for (var i = 0; i < nShapes; i++) {
+            let pointsList = [];
+            for (var j = 0; j < nPoints * 2; j++) {
+                if (j % 2) {
+                    pointsList.push(parseInt(Math.random() * (window.innerHeight - 100)));
+                } else {
+                    pointsList.push(parseInt(Math.random() * (window.innerWidth - 20) + 20));
+                }
+            }
+            shapesList.push(pointsList);
+        }
+
+        return shapesList;
+    }
+    
     /* =============================== RENDER =============================== */
 
     render () {

@@ -34,7 +34,9 @@ class Shape extends React.Component {
             isMuted: false,
             quantizeFactor: 1,
             
+            averagePoint: {x: 0, y: 0},
             firstNoteIndex: 1,
+            noteIndexModifier: 0,
 
             isHoveredOver: false, 
             editorX: 0,
@@ -55,15 +57,16 @@ class Shape extends React.Component {
         this.handleShapeClick = this.handleShapeClick.bind(this)
         this.handleMouseOver = this.handleMouseOver.bind(this)
         this.handleMouseOut = this.handleMouseOut.bind(this)
-        this.handleShapeDrag = this.handleShapeDrag.bind(this);    
+        this.handleDrag = this.handleDrag.bind(this);    
+        this.handleDragStart = this.handleDragStart.bind(this);    
+        this.handleDragEnd = this.handleDragEnd.bind(this);    
         this.dragBoundFunc = this.dragBoundFunc.bind(this);    
         
         // vertices
         this.handleVertexDragMove = this.handleVertexDragMove.bind(this);
         
         // perimeter 
-        this.getTotalLength = this.getTotalLength.bind(this);    
-        this.setPerimeterLength = this.setPerimeterLength.bind(this);    
+        this.getPointsWithFixedPerimeterLength = this.getPointsWithFixedPerimeterLength.bind(this);    
         
         // shape editor handlers
         this.handleDelete = this.handleDelete.bind(this);    
@@ -71,10 +74,6 @@ class Shape extends React.Component {
         this.handleQuantizeFactorChange = this.handleQuantizeFactorChange.bind(this);    
         this.handleToTopClick = this.handleToTopClick.bind(this);    
         this.handleToBottomClick = this.handleToBottomClick.bind(this);  
-
-        // audio  
-        this.transposeByScaleDegree = this.transposeByScaleDegree.bind(this);  
-
     }
 
     componentWillMount () {
@@ -93,10 +92,13 @@ class Shape extends React.Component {
                     "sustain": 0.2,
                     "release": 1,
                 }
-            }).toMaster();
+            });
         
         this.synth.volume.value = this.state.volume;
-
+        
+        this.panner = new Tone.Panner(0).toMaster();
+        this.synth.connect(this.panner);
+        
         this.part = new Tone.Part((time, val) => {
             //console.log("Playing note", val.note, "for", val.duration, "INDEX:", val.pIndex);            
             const dur = val.duration / this.part.playbackRate;
@@ -139,7 +141,8 @@ class Shape extends React.Component {
                 }
             }, time)
             
-            const noteString = this.props.scaleObj.get(val.noteIndex).toString();
+            const noteIndex = val.noteIndex + this.state.noteIndexModifier;
+            const noteString = this.props.scaleObj.get(noteIndex).toString();
             // trigger synth
             this.synth.triggerAttackRelease(noteString, dur, time);
         }, []).start(0);
@@ -149,7 +152,7 @@ class Shape extends React.Component {
 
         // TODO ugly
         if (this.props.isAutoQuantizeActive) {
-            const newPoints = this.setPerimeterLength(this.state.points, this.quantizeLength * this.state.quantizeFactor);
+            const newPoints = this.getPointsWithFixedPerimeterLength(this.state.points, this.quantizeLength * this.state.quantizeFactor);
             this.setNoteEvents(this.props.scaleObj, newPoints);
             this.setState({
                 points: newPoints
@@ -157,7 +160,10 @@ class Shape extends React.Component {
         } else {
             this.setNoteEvents(this.props.scaleObj, this.state.points);
         }
-
+    }
+    
+    componentDidMount () {
+        this.handleDrag();
     }
 
     componentWillUnmount () {
@@ -166,15 +172,47 @@ class Shape extends React.Component {
         this.part.dispose();
         this.synth.dispose();
     }
+
+    componentWillReceiveProps (nextProps) {
+        //console.log(nextProps);
+        
+        /* remove hover styles when switchin to draw mode */
+        if (nextProps.activeTool === 'draw' && this.props.activeTool === 'edit') {
+            this.setState({
+                isHoveredOver: false
+            })
+        }
+
+        if (nextProps.isAutoQuantizeActive && nextProps.isAutoQuantizeActive !== this.props.isAutoQuantizeActive) {
+            const newPoints = this.getPointsWithFixedPerimeterLength(this.state.points, this.quantizeLength * this.state.quantizeFactor);
+            this.setNoteEvents(nextProps.scaleObj, newPoints);
+            this.setState({
+                points: newPoints
+            })
+        }
+
+        /* update note events if new scale or new tonic */
+        if (this.props.scaleObj.name !== nextProps.scaleObj.name || 
+                this.props.scaleObj.tonic.toString() !== nextProps.scaleObj.tonic.toString()) {
+            this.setNoteEvents(nextProps.scaleObj, this.state.points)
+        }
+
+        /* on tempo update */
+        if (this.props.tempo !== nextProps.tempo) {
+            this.part.playbackRate = nextProps.tempo/50;
+            //this.setNoteEvents(nextProps.scaleObj, this.state.points)
+        }
+    }
     
+    /* ================================ AUDIO =============================== */
+
     setNoteEvents (scaleObj, points) {
         this.part.removeAll();
         
         let delay = 0;
-
         let prevNoteIndex = this.state.firstNoteIndex;
 
-        this.forEachPoint(points, (p, i) => {
+        Utils.forEachPoint(points, (p, i) => {
             if (i >= 2) {
                 const noteInfo = this.getNoteInfo(points, scaleObj, i, i-2, i-4, prevNoteIndex);
                 this.part.add(delay, noteInfo);
@@ -208,27 +246,11 @@ class Shape extends React.Component {
         }
         
         const edgeLength = Utils.dist(p.x, p.y, prev.x, prev.y) / tempoModifier;
-        //const theta = Utils.getAngle(prev, p, prevPrev);
+        const theta = Utils.getAngle(p, prev, prevPrev)
+        const degreeDiff = Utils.thetaToScaleDegree(theta, scaleObj);
         
-        const v1 = [p.x - prev.x, p.y - prev.y];
-        const v2 = [prev.x - prevPrev.x, prev.y - prevPrev.y];
-
-        const atanA = Math.atan2(p.x - prev.x, p.y - prev.y);
-        const atanC = Math.atan2(prevPrev.x - prev.x, prevPrev.y - prev.y);
-        
-        let diff = atanA - atanC;
-
-        //if (diff > Math.PI) diff -=  Math.PI;
-        //else if (diff < -1 * Math.PI) diff +=  Math.PI;
-        
-        diff = diff * 180 / Math.PI;
-        console.log(diff);
-        //      double atanA = atan2(A.x - B.x, A.y - B.y);
-        //      double atanC = atan2(C.x - B.x, C.y - B.y);
-        //      double diff = atanC - atanA;
-        
-        const degreeDiff = this.thetaToScaleDegree (diff, scaleObj);
         const noteIndex = prevNoteIndex + degreeDiff;
+        
         return {
             duration: edgeLength, 
             noteIndex: noteIndex,
@@ -236,83 +258,15 @@ class Shape extends React.Component {
         }
     }
 
-    thetaToScaleDegree (theta, scaleObj) {
-        if (theta < 0) {
-            theta = theta + 360;
-        }
-
-        if (theta > 180) {
-            theta = theta - 360;
-        }
-        var negMult = 1;
-        if (theta < 0) {
-            negMult = -1;
-        }
-        var absTheta = Math.abs(theta);
-        //console.log("THETA")
-        // find sector
-        var notesInScale = scaleObj.simple().length - 1;
-        var changeInScaleDegree = 0;
-        var dTheta = 180 / notesInScale;
-        var lowerBound = 0;
-        var upperBound = dTheta;
-        
-        let newIndex = 0;
-        for (var i = notesInScale; i > 0; i--) {
-            if(Utils.isBetween(absTheta, lowerBound, upperBound)) {
-                console.log("THETA:", absTheta);
-                console.log("IN THIS SECTOR:", i);
-                console.log("IS LEFT TURN: ", negMult < 0 ? "YES" : "NO");
-                
-                newIndex = i * negMult;
-                break;
-            }
-            lowerBound = upperBound;
-            upperBound += dTheta;
-        }
-        return newIndex;
-    }
-    componentWillReceiveProps (nextProps) {
-        if (nextProps.activeTool === 'draw') {
-            this.setState({
-                isHoveredOver: false
-            })
-        }
-
-        if (nextProps.isAutoQuantizeActive && nextProps.isAutoQuantizeActive !== this.props.isAutoQuantizeActive) {
-            const newPoints = this.setPerimeterLength(this.state.points, this.quantizeLength * this.state.quantizeFactor);
-            this.setNoteEvents(nextProps.scaleObj, newPoints);
-            this.setState({
-                points: newPoints
-            })
-        }
-
-        /* update note events if new scale or new tonic */
-        if (this.props.scaleObj.name !== nextProps.scaleObj.name || 
-                this.props.scaleObj.tonic.toString() !== nextProps.scaleObj.tonic.toString()) {
-            this.setNoteEvents(nextProps.scaleObj, this.state.points)
-        }
-
-        /* on tempo update */
-        if (this.props.tempo !== nextProps.tempo) {
-            this.part.playbackRate = nextProps.tempo/50;
-            //this.setNoteEvents(nextProps.scaleObj, this.state.points)
-        }
-    }
-    
-    /* ================================ AUDIO =============================== */
-
-    transposeByScaleDegree (currIndex, degree, scaleObj) {
-        const newDegree = degree + currIndex;
-        const newNote = scaleObj.get(newDegree).toString();
-        //console.log(newNote);
-        return newNote;
+    setPan (val) {
+        this.panner.pan.value = val * 0.9;
     }
 
     /* ============================== HANDLERS ============================== */
 
     /* --- Shape ------------------------------------------------------------ */
 
+    /* Click */
     handleMouseDown (e) {
         this.setState({
             editorX: e.evt.offsetX,
@@ -333,9 +287,37 @@ class Shape extends React.Component {
     handleDelete () {
         this.props.onDelete(this.props.index);
     }
+    
+    /* Drag */
+    handleDragStart (e) {
+        this.setState({
+            isDragging: true
+        })
+    }
+    
+    handleDrag (e) {
+        const absPos = this.shapeElement.getAbsolutePosition();
+        const avgPoint = Utils.getAveragePoint(this.state.points);
 
-    handleShapeDrag (e) {
-        //console.log(e.target.getAbsolutePosition());
+        const x = parseInt(absPos.x + avgPoint.x);
+        const y = parseInt(absPos.y + avgPoint.y);
+
+        const panVal = Utils.convertValToRange(x, 0, window.innerWidth, -1, 1);
+        const noteIndexVal = parseInt(Utils.convertValToRange(y, 0, window.innerHeight, 5, -5));
+        
+        this.setPan(panVal);
+        console.log(noteIndexVal);
+
+        this.setState({
+            averagePoint: {x: x, y: y},
+            noteIndexModifier: noteIndexVal
+        })
+    }
+    
+    handleDragEnd (e) {
+        this.setState({
+            isDragging: false
+        })    
     }
 
     dragBoundFunc (pos) {
@@ -344,7 +326,8 @@ class Shape extends React.Component {
             y: this.props.snapToGrid(pos.y)
         };
     }
-
+    
+    /* Hover */
     handleMouseOver () {
         this.setState({
             isHoveredOver: true
@@ -384,7 +367,7 @@ class Shape extends React.Component {
 
     /* --- Quantization --- */
     handleQuantizeClick () {
-        const newPoints = this.setPerimeterLength(this.state.points, 
+        const newPoints = this.getPointsWithFixedPerimeterLength(this.state.points, 
                                 this.quantizeLength * this.state.quantizeFactor);
         
         this.setNoteEvents(this.props.scaleObj, newPoints);
@@ -399,8 +382,8 @@ class Shape extends React.Component {
                 (factor > 1 && this.state.quantizeFactor <= 4)) {
                 const newPerim = this.props.isAutoQuantizeActive ? 
                                     factor * this.state.quantizeFactor * this.quantizeLength :
-                                    this.getTotalLength(this.state.points) * factor
-                const newPoints = this.setPerimeterLength(this.state.points, newPerim);
+                                    Utils.getTotalLength(this.state.points) * factor
+                const newPoints = this.getPointsWithFixedPerimeterLength(this.state.points, newPerim);
                 
                 this.setNoteEvents(this.props.scaleObj, newPoints);
                 
@@ -445,7 +428,7 @@ class Shape extends React.Component {
             points[i+1] = this.props.snapToGrid(pos.y);
 
             if (this.props.isAutoQuantizeActive) {
-                points = this.setPerimeterLength(points, this.quantizeLength * this.state.quantizeFactor);
+                points = this.getPointsWithFixedPerimeterLength(points, this.quantizeLength * this.state.quantizeFactor);
             }
 
             this.setNoteEvents(this.props.scaleObj, points);
@@ -464,48 +447,14 @@ class Shape extends React.Component {
         return Color(color).alpha(alphaAmount).toString();
     }
 
-    getTotalLength (points) {
-        let len = 0;
-        const n = points.length;
-
-        for (let i = 2; i < points.length; i+=2) {
-            const x = points[i];
-            const y = points[i+1];
-            const prevX = points[i-2];
-            const prevY = points[i-1];
-            len += Utils.dist(x,y,prevX,prevY)
-        }
-
-        // last edge
-        len += Utils.dist(points[0], points[1], points[n-2], points[n-1]);
-        return len;
-    }
-
-    getAveragePoint (points) {
-        let totalX = 0;
-        let totalY = 0;
-        
-        this.forEachPoint(points, (p) => {
-            totalX += p.x;
-            totalY += p.y;
-        })
-
-        return {
-            x: totalX / (points.length / 2),
-            y: totalY / (points.length / 2)
-        }
-    }
-
-    setPerimeterLength (points, length) {
-        //const length = this.quantizeLength;
-
-        const currLen = this.getTotalLength(points);
-        const avgPoint = this.getAveragePoint(points);
+    getPointsWithFixedPerimeterLength (points, length) {
+        const currLen = Utils.getTotalLength(points);
+        const avgPoint = Utils.getAveragePoint(points);
         const ratio = length / currLen;
 
         let newPoints = points.slice();
         
-        this.forEachPoint(points, (p, i) => {
+        Utils.forEachPoint(points, (p, i) => {
             newPoints[i] = p.x * ratio + (1 - ratio) * avgPoint.x;;
             newPoints[i+1] =  p.y * ratio + (1 - ratio) * avgPoint.y;;
         })
@@ -513,19 +462,12 @@ class Shape extends React.Component {
         return newPoints;
     }
 
-    forEachPoint (points, callback) {
-        for (var i = 0; i < points.length; i += 2) {
-            let p = {
-                x: points[i],
-                y: points[i+1]
-            }
-            callback(p, i)
-        }
-    }
 
     /* =============================== RENDER =============================== */
 
     render () {
+        console.log("shape render");
+
         const color = this.props.colorsList[this.state.colorIndex];
         const isEditMode = this.props.activeTool === 'edit';
         const attrs = {
@@ -535,11 +477,19 @@ class Shape extends React.Component {
             opacity: this.state.isMuted ? 0.2 : 1
         }
 
-        const perimeter = this.getTotalLength(this.state.points);
+        const perimeter = Utils.getTotalLength(this.state.points);
         
+        let panningVal = parseInt(Utils.convertValToRange(this.state.averagePoint.x, 0, window.innerWidth, -50, 50));
+        if (panningVal > 0) {
+            panningVal = panningVal + "R"
+        } else if (panningVal < 0) {
+            panningVal = Math.abs(panningVal) + "L"
+        }
+
         const animCircle = this.props.isPlaying ? (
                 <Circle
                     ref={c => this.animCircle = c}
+                    hitGraphEnabled={false}
                     x={-999}
                     y={-999}
                     radius={6}
@@ -556,7 +506,7 @@ class Shape extends React.Component {
                     ref={c => this.groupElement = c}
                     draggable={true}
                     dragBoundFunc={this.dragBoundFunc}
-                    onDragMove={this.handleShapeDrag}
+                    onDragMove={this.handleDrag}
                     onDragStart={this.handleDragStart}
                     onDragEnd={this.handleDragEnd}
                     opacity={attrs.opacity}>
@@ -573,7 +523,8 @@ class Shape extends React.Component {
                         onClick={this.handleShapeClick}
                         onMouseDown={this.handleMouseDown}
                         onMouseOver={this.handleMouseOver}
-                        onMouseOut={this.handleMouseOut}/>
+                        onMouseOut={this.handleMouseOut}
+                    />
                     
                     {this.state.points.map((p, i, arr) => {
                         if (!(i % 2)) {
@@ -627,6 +578,20 @@ class Shape extends React.Component {
 
                         />
                     </Portal>
+
+                    <Portal isOpened={this.state.isDragging}>
+                        <div style={{
+                            textTransform: 'capitalize',
+                            backgroundColor: {color},
+                            position: 'absolute',
+                            top: this.state.averagePoint.y,
+                            left: this.state.averagePoint.x,
+                            fontSize: '0.8em'
+                        }}>
+                            PAN: {panningVal}<br/>
+                            NOTE: {this.props.scaleObj.get(this.state.noteIndexModifier).toString()}
+                        </div>
+                    </Portal>
                 </Group>
             );
         } else {
@@ -634,6 +599,7 @@ class Shape extends React.Component {
             return (   
                 <Group 
                     ref={c => this.groupElement = c}
+                    hitGraphEnabled={false}
                     draggable={false}
                     opacity={attrs.opacity}>
                     <Line
