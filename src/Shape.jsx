@@ -32,6 +32,7 @@ class Shape extends React.Component {
             
             volume: -5,
             isMuted: false,
+            isSoloed: false,
             quantizeFactor: 1,
             
             averagePoint: {x: 0, y: 0},
@@ -51,6 +52,7 @@ class Shape extends React.Component {
         this.handleVolumeChange = this.handleVolumeChange.bind(this)
         this.handleColorChange = this.handleColorChange.bind(this);    
         this.handleMuteChange = this.handleMuteChange.bind(this);    
+        this.handleSoloChange = this.handleSoloChange.bind(this);    
         
         // shape events
         this.handleMouseDown = this.handleMouseDown.bind(this);    
@@ -96,8 +98,9 @@ class Shape extends React.Component {
         
         this.synth.volume.value = this.state.volume;
         
-        this.panner = new Tone.Panner(0).toMaster();
-        this.synth.connect(this.panner);
+        this.panner = new Tone.Panner(0);
+        this.solo = new Tone.Solo();
+        this.synth.chain(this.panner, this.solo, Tone.Master);
         
         this.part = new Tone.Part((time, val) => {
             //console.log("Playing note", val.note, "for", val.duration, "INDEX:", val.pIndex);            
@@ -204,6 +207,35 @@ class Shape extends React.Component {
         }
     }
     
+    shouldComponentUpdate (nextProps, nextState) {
+        return !(this.isEquivalent(this.props, nextProps) && this.isEquivalent(this.state, nextState));
+    }
+
+    isEquivalent(a, b) {
+        // Create arrays of property names
+        var aProps = Object.getOwnPropertyNames(a);
+        var bProps = Object.getOwnPropertyNames(b);
+
+        // If number of properties is different,
+        // objects are not equivalent
+        if (aProps.length != bProps.length) {
+            return false;
+        }
+
+        for (var i = 0; i < aProps.length; i++) {
+            var propName = aProps[i];
+
+            // If values of same property are not equal,
+            // objects are not equivalent
+            if (a[propName] !== b[propName]) {
+                return false;
+            }
+        }
+
+        // If we made it this far, objects
+        // are considered equivalent
+        return true;
+    }
     /* ================================ AUDIO =============================== */
 
     setNoteEvents (scaleObj, points) {
@@ -303,7 +335,7 @@ class Shape extends React.Component {
         const y = parseInt(absPos.y + avgPoint.y);
 
         const panVal = Utils.convertValToRange(x, 0, window.innerWidth, -1, 1);
-        const noteIndexVal = parseInt(Utils.convertValToRange(y, 0, window.innerHeight, 5, -5));
+        const noteIndexVal = parseInt(Utils.convertValToRange(y, 0, window.innerHeight, 5, -7));
         
         this.setPan(panVal);
         console.log(noteIndexVal);
@@ -360,9 +392,17 @@ class Shape extends React.Component {
     }
 
     handleMuteChange (event) {
+        this.part.mute = !this.state.isMuted;
         this.setState({
             isMuted: !this.state.isMuted
         })
+    }
+
+    handleSoloChange () {
+        this.setState({
+            isSoloed: !this.state.isSoloed
+        })
+        this.solo.solo = !this.solo.solo;
     }
 
     /* --- Quantization --- */
@@ -481,9 +521,9 @@ class Shape extends React.Component {
         
         let panningVal = parseInt(Utils.convertValToRange(this.state.averagePoint.x, 0, window.innerWidth, -50, 50));
         if (panningVal > 0) {
-            panningVal = panningVal + "R"
+            panningVal = panningVal + " R"
         } else if (panningVal < 0) {
-            panningVal = Math.abs(panningVal) + "L"
+            panningVal = Math.abs(panningVal) + " L"
         }
 
         const animCircle = this.props.isPlaying ? (
@@ -562,6 +602,8 @@ class Shape extends React.Component {
                             
                             isMuted={this.state.isMuted}
                             onMuteChange={this.handleMuteChange}
+                            isSoloed={this.state.isSoloed}
+                            onSoloChange={this.handleSoloChange}
 
                             colorIndex={this.state.colorIndex}
                             colorsList={this.props.colorsList}
@@ -584,8 +626,8 @@ class Shape extends React.Component {
                             textTransform: 'capitalize',
                             backgroundColor: {color},
                             position: 'absolute',
-                            top: this.state.averagePoint.y,
-                            left: this.state.averagePoint.x,
+                            top: this.state.averagePoint.y + 20,
+                            left: this.state.averagePoint.x - 20,
                             fontSize: '0.8em'
                         }}>
                             PAN: {panningVal}<br/>

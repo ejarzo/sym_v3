@@ -111,6 +111,7 @@ const Utils = {
 function isBetween (val, a, b) {
     return (val >= a && val <= b);
 }
+
 function polarToCartesian (centerX, centerY, radius, angleInDegrees) {
   var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
   return {

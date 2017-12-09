@@ -118,7 +118,12 @@ class ShapeEditorPanel extends Component {
                             <label className="checkbox-label" htmlFor="mute">Mute</label>
                         </div>
                         <div className="col col-6">
-                            <input id="solo" type="checkbox" />
+                            <input 
+                                id="solo" 
+                                type="checkbox" 
+                                checked={this.props.isSoloed} 
+                                onChange={this.props.onSoloChange}
+                            />
                             <label className="checkbox-label" htmlFor="solo">Solo</label>
                         </div>
 

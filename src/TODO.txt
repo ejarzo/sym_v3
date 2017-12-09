@@ -2,10 +2,7 @@ TODO
 
 - scrolling on instrument editor panels
 - shape animation based on state
-- note chooser
 - key press weirdness
-- panning, effects
-- animCircles briefly flash at top when playback starts - due to playback delay
 - smooth tempo transition
 - perfect loops when quantized
 - z-index fixing
@@ -15,3 +12,10 @@ TODO
 - menus
 - shape points update should update props rather than state, so that shapeCanvas's shapesList can be used to save the project data
 - mute/solo
+- effects
+
+DONE
+
+- animCircles briefly flash at top when playback starts - due to playback delay
+- panning
+- note chooser

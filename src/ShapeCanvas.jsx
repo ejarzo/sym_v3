@@ -49,7 +49,7 @@ class ShapeCanvas extends Component {
             })
         }
     }
-    
+
     appendShape () {
         let shapesList = this.state.shapesList.slice();
         const points = this.state.currPoints.slice();
@@ -136,15 +136,15 @@ class ShapeCanvas extends Component {
         x = this.snapToGrid(x);
         y = this.snapToGrid(y);
 
-        // snap to origin if within radius
-        if (this.state.currPoints.length > 2 && (Utils.dist(e.evt.offsetX, e.evt.offsetY, originX, originY) < this.originLockRadius
-                || (x === originX && y === originY))) {
-            x = originX;
-            y = originY;
-            drawingState = 'preview';
-        }
-        
         if (this.props.activeTool === 'draw') {
+            // snap to origin if within radius
+            if (this.state.currPoints.length > 2 && (Utils.dist(e.evt.offsetX, e.evt.offsetY, originX, originY) < this.originLockRadius
+                    || (x === originX && y === originY))) {
+                x = originX;
+                y = originY;
+                drawingState = 'preview';
+            }
+        
             this.setState({
                 mousePos: {x: x, y: y},
                 drawingState: drawingState
