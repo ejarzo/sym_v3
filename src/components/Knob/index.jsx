@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import Utils from './Utils.js';
 import Draggable from 'react-draggable';
+
+import Utils from '../../utils/Utils.js';
 
 class Knob extends Component {
     constructor (props) {

@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import Portal from 'react-portal';
-import Utils from './Utils.js';
 import Color from 'color';
 import Tone from 'tone';
-
 import {Group, Line, Circle} from 'react-konva';
+
+import Utils from '../../utils/Utils.js';
 import ShapeEditorPanel from './ShapeEditorPanel.jsx'
 
 /*

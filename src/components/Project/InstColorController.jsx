@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import Select from 'react-select';
-import Knob from './Knob.js';
 import Color from 'color';
+
+import Knob from '../Knob';
 
 class InstColorController extends Component {
     constructor (props) {

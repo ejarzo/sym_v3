@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import Color from 'color';
 import {Stage, Layer, Line, Circle, Group} from 'react-konva';
-import Shape from './Shape.jsx'
-import Utils from './Utils.js'
+
+import Shape from '../Shape';
+import Utils from '../../utils/Utils.js';
 
 /*
     The ShapeCanvas is canvas where the shapes are drawn

@@ -1,20 +1,20 @@
 import React, { Component } from 'react';
 
-import "./css/simple-grid.css";
+import "../static/css/simple-grid.css";
 
 // select
-import './css/react-select/react-select-theme.css';
-import './css/react-toggle/react-toggle.css';
+import '../static/css/react-select/react-select-theme.css';
+import '../static/css/react-toggle/react-toggle.css';
 // slider
-import './css/react-range-slider/rangeslider.css';
-import './css/react-range-slider/range-slider-theme.css';
+import '../static/css/react-range-slider/rangeslider.css';
+import '../static/css/react-range-slider/range-slider-theme.css';
 // icons
-import "./css/ionicons.min.css";
+import "../static/css/ionicons.min.css";
 
-import './css/normalize.css';
-import './css/main.css';
+import '../static/css/normalize.css';
+import '../static/css/main.css';
 
-import Project from './Project.jsx'
+import Project from '../components/Project'
 
 const defaultState = {
     name: 'New Project',

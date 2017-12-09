@@ -6,13 +6,13 @@ import NumericInput from 'react-numeric-input';
 import Fullscreen from 'react-full-screen';
 import Tone from 'tone';
 
-import ShapeCanvas from './ShapeCanvas.jsx';
-import InstColorController from './InstColorController.js';
+import ShapeCanvas from '../ShapeCanvas';
+import InstColorController from './InstColorController.jsx';
 
-import drawIcon from './img/draw-icon.svg'
-import editIcon from './img/edit-icon.svg'
-import drawIconWhite from './img/draw-icon-white.svg'
-import editIconWhite from './img/edit-icon-white.svg'
+import drawIcon from '../../static/img/draw-icon.svg'
+import editIcon from '../../static/img/edit-icon.svg'
+import drawIconWhite from '../../static/img/draw-icon-white.svg'
+import editIconWhite from '../../static/img/edit-icon-white.svg'
 
 /* ========================================================================== */
 
