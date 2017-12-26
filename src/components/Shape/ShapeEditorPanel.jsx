@@ -1,8 +1,36 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
-// sliders
-import Slider from 'react-rangeslider'
+import Slider from 'react-rangeslider';
 
+
+const propTypes = {
+    position: PropTypes.shape({
+        x: PropTypes.number.isRequired,
+        y: PropTypes.number.isRequired,
+    }).isRequired,
+    colorsList: PropTypes.array.isRequired,
+    colorIndex: PropTypes.number.isRequired,
+    volume: PropTypes.number.isRequired,
+    
+    isMuted: PropTypes.bool.isRequired,
+    isSoloed: PropTypes.bool.isRequired,
+    
+    closePortal: PropTypes.func.isRequired,
+    
+    onColorChange: PropTypes.func.isRequired,
+    onVolumeChange: PropTypes.func.isRequired,
+    onMuteChange: PropTypes.func.isRequired,
+    onSoloChange: PropTypes.func.isRequired,
+    onQuantizeFactorChange: PropTypes.func.isRequired,
+    
+    onQuantizeClick: PropTypes.func.isRequired,
+    onToTopClick: PropTypes.func.isRequired,
+    onToBottomClick: PropTypes.func.isRequired,
+    onDeleteClick: PropTypes.func.isRequired,
+    
+    perimeter: PropTypes.number.isRequired,
+};
 
 /*
     Shape Editor Panel: appears when a shape is clicked on.
@@ -20,7 +48,7 @@ class ShapeEditorPanel extends Component {
         let x = this.props.position.x;
         let y = this.props.position.y + yPad;
 
-        let arrowTop = 40
+        let arrowTop = 40;
         
         let isLeft = true;
 
@@ -32,14 +60,14 @@ class ShapeEditorPanel extends Component {
         } else {
             // editor shows on right of mosue
             // arrow on left
-            x = x + xPad
+            x = x + xPad;
         }
         
         if (y + height > window.innerHeight) {
             y = window.innerHeight - height - 15;
             arrowTop = this.props.position.y - y + 70;
             if (arrowTop > height - 20) {
-                arrowTop = height - 20
+                arrowTop = height - 20;
             }
         }
 
@@ -48,15 +76,15 @@ class ShapeEditorPanel extends Component {
             height: height,
             left: x,
             top: y
-        }
+        };
 
         this.arrowStyle = {
             top: arrowTop
-        }
+        };
 
         this.state = {
             editorArrowIsLeft: isLeft
-        }
+        };
 
 
         this.handleOverlayClick = this.handleOverlayClick.bind(this);
@@ -67,7 +95,7 @@ class ShapeEditorPanel extends Component {
     }
 
     render() {
-        const editorArrowClass = this.state.editorArrowIsLeft ? "arrow-left" : "arrow-right"
+        const editorArrowClass = this.state.editorArrowIsLeft ? 'arrow-left' : 'arrow-right';
         return(    
             <div className="shape-editor-panel" style={this.divStyle}>
                 <div className="row section">
@@ -75,13 +103,10 @@ class ShapeEditorPanel extends Component {
                         <div className="shape-color-picker">
                             {this.props.colorsList.map((color, i) => {
                                 const isSelected = i === this.props.colorIndex;
-
                                 const style = {
                                     backgroundColor: color,
                                     opacity: isSelected ? 1 : 0.3,
-                                    //transform: isSelected ? "scale(1.2)" : "scale(1)",
-                                    //zIndex: isSelected ? 1 : 0
-                                }
+                                };
                                 return (
                                     <div 
                                         key={i}
@@ -96,7 +121,7 @@ class ShapeEditorPanel extends Component {
 
                     <div className="col col-4 slider-container">
                         <Slider
-                            className={"color-"+ this.props.colorIndex}
+                            className={'color-'+ this.props.colorIndex}
                             orientation='vertical'
                             min={-18}
                             max={0}
@@ -133,13 +158,13 @@ class ShapeEditorPanel extends Component {
                         <div className="col col-6">
                             <button
                                 onClick={this.props.onQuantizeFactorChange(2)}>
-                                *2
+                                {'*2'}
                             </button>
                         </div>
                         <div className="col col-6">
                             <button
                                 onClick={this.props.onQuantizeFactorChange(0.5)}>
-                                /2
+                                {'/2'}
                             </button>
                         </div>
                     </div>
@@ -163,10 +188,12 @@ class ShapeEditorPanel extends Component {
                         Perimeter: {this.props.perimeter}
                     </span>
                 </div>
-                <div className={"tooltip-arrow " + editorArrowClass} style={this.arrowStyle}></div>
+                <div className={'tooltip-arrow ' + editorArrowClass} style={this.arrowStyle}></div>
             </div>
         );
     }
 }
 
-export default ShapeEditorPanel
+ShapeEditorPanel.propTypes = propTypes;
+
+export default ShapeEditorPanel;

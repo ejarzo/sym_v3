@@ -4,8 +4,11 @@
   "private": true,
   "dependencies": {
     "color": "^2.0.1",
+    "enzyme": "^3.2.0",
     "konva": "^1.7.6",
+    "prop-types": "^15.6.0",
     "react": "^16.1.0-beta",
+    "react-addons-test-utils": "^15.6.2",
     "react-dom": "^16.1.0-beta",
     "react-draggable": "^3.0.3",
     "react-full-screen": "0.0.2",
@@ -26,5 +29,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "eslint": "^4.13.1",
+    "eslint-plugin-react": "^7.5.1"
   }
 }

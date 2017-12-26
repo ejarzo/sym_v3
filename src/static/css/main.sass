@@ -219,6 +219,7 @@ button
             background: #ccc
             text-align: center
             width: 25%
+            min-width: 270px
             //height: 100%
             font-size: 12px
             display: inline-block
@@ -283,9 +284,10 @@ button
                 height: 100%
                 li
                     display: inline-block
+                    position: relative
                     height: 67px
-                    min-width: 65px
                     width: 25%
+                    min-width: 65px
                     overflow: hidden
                     padding-right: 10px
                     padding-left: 10px
@@ -298,12 +300,17 @@ button
                     .expand-on-hover
                         @include button_expand_on_hover
                 .inst-param-title
+                    position: absolute
+                    text-transform: capitalize
                     display: block
                     width: 100%
                     text-align: center
                     font-size: .9em
-                    position: relative
-                    top: -7px
+                    bottom: 6px
+                    margin: 0 auto
+                    left: 0
+                    right: 0
+
 /* ========================================================================== */
 
 .controls 

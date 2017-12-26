@@ -1,54 +1,58 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+
 import Select from 'react-select';
 import Color from 'color';
 
 import Knob from '../Knob';
 
+const propTypes = {
+    color: PropTypes.string.isRequired,
+    instNamesList: PropTypes.array.isRequired,
+    
+    synthParams: PropTypes.shape({
+        name: PropTypes.shape({
+            label: PropTypes.string.isRequired,
+            value: PropTypes.number.isRequired,
+        }),
+        baseSynth: PropTypes.func.isRequired,
+        dynamicParams: PropTypes.array.isRequired,
+        effects: PropTypes.array,
+    }).isRequired,
+    dynamicParamVals: PropTypes.array.isRequired,
+    
+    onKnobChange: PropTypes.func.isRequired,
+    handleInstChange: PropTypes.func.isRequired,
+};
+
 class InstColorController extends Component {
     constructor (props) {
         super(props);
 
-        this.state = {
-            instParams: [
-                {name: "Decay", value: 50}, 
-                {name: "Space", value: 50}, 
-                {name: "Shine", value: 50}, 
-                {name: "Shimmer", value: 50}, 
-            ],
-            instName: "keys"
-        };
-
+        this.setDefaults(props.synthParams.dynamicParams);
         this.handleInstChange = this.handleInstChange.bind(this);
     }
 
-    componentDidMount () {
-
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.synthParams.name.value !== this.props.synthParams.name.value) {
+            this.setDefaults(nextProps.synthParams.dynamicParams);
+        }
+    }
+    
+    setDefaults (dynamicParams) {
+        dynamicParams.forEach((param, i) => {
+            this.props.onKnobChange(i, param.default);
+        });
     }
 
     handleInstChange (val) {
-        this.setState({
-            instName: val.value,
-            instParams: [
-                {name: "Decay", value: 50}, 
-                {name: "Space", value: 50}, 
-                {name: "Shine", value: 50}, 
-                {name: "Shimmer", value: 50}, 
-            ],
-        })
+        this.props.handleInstChange(val.value);
     }
 
     handleParamValueChange (i) {
         return (val) => {
-            let instParams = this.state.instParams.slice();
-            instParams[i] = {
-                name: instParams[i].name,
-                value: val
-            }
-            this.setState({
-                instParams: instParams
-            })
-            console.log(this.state);
-        }
+            this.props.onKnobChange(i, val);
+        };
     }
 
     render () {
@@ -56,16 +60,15 @@ class InstColorController extends Component {
         const contentBackgroundColor = Color(this.props.color).lighten(0.1);
       
         return (    
-           <li id="inst-0" className="inst-option">
-                
+            <li className="inst-option">
                 <div className="inst-title" style={{backgroundColor: titleBackgroundColor}}>
-                    <div style={{width: "50%", backgroundColor: Color(this.props.color).darken(0.1)}}>
-                       <Select
-                            optionRenderer={(option) => {
-                                return (
-                                    <div style={{backgroundColor: titleBackgroundColor}}>{option.label}</div>
-                                );
-                            }}
+                    <div style={{width: '50%', backgroundColor: Color(this.props.color).darken(0.1)}}>
+                        <Select
+                            optionRenderer={option => (
+                                <div style={{backgroundColor: titleBackgroundColor}}>
+                                    {option.label}
+                                </div>
+                            )}
                             menuStyle={{
                                 background: titleBackgroundColor
                             }}
@@ -73,30 +76,33 @@ class InstColorController extends Component {
                             searchable={true}
                             clearable={false}
                             name="Instrument Select"
-                            value={this.state.instName}
+                            value={this.props.synthParams.name.value}
                             options={this.props.instNamesList}
-                            onChange={this.handleInstChange}/>
+                            onChange={this.handleInstChange}
+                        />
                         {/*<button className="show-hide show-hide-inst" data-target="inst-selectors" title="Show/Hide synth controls">
                             <i className="ion-arrow-left-b"></i>
                         </button>*/}
                     </div>
                 </div>
                 <ul className="inst-params" style={{backgroundColor: contentBackgroundColor}}>
-                    {this.state.instParams.map((paramObj, i) => {
+                    {this.props.synthParams.dynamicParams.map((effect, i) => {
                         return (
                             <li key={i}>
                                 <Knob
-                                    paramName={paramObj.name}
-                                    value={paramObj.value}
+                                    paramName={effect.name}
+                                    value={this.props.dynamicParamVals[i]}
                                     onChange={this.handleParamValueChange(i)}
                                 />
                             </li>
                         );
                     })}
                 </ul>
-           </li>
+            </li>
         );
     }
 }
 
-export default InstColorController
+InstColorController.propTypes = propTypes;
+
+export default InstColorController;

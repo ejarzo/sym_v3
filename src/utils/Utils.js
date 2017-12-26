@@ -7,29 +7,24 @@ const Utils = {
     describeArc: (x, y, radius, startAngle, endAngle) => {
         var start = polarToCartesian(x, y, radius, endAngle);
         var end = polarToCartesian(x, y, radius, startAngle);
-        var largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+        var largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
         var d = [
-            "M", start.x, start.y, 
-            "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y
-        ].join(" ");
+            'M', start.x, start.y, 
+            'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y
+        ].join(' ');
         return d;       
     },
 
     convertValToRange: (oldVal, oldMin, oldMax, newMin, newMax) => {
-        return (((oldVal - oldMin) * (newMax - newMin)) / (oldMax - oldMin)) + newMin
+        return (((oldVal - oldMin) * (newMax - newMin)) / (oldMax - oldMin)) + newMin;
     },
     
     // shapes 
     getAngle: (p1, p2, p3) => {
-        //const v1 = [p1.x - p2.x, p.y - p2.y];
-        //const v2 = [p2.x - p3.x, p2.y - p3.y];
-
         const atanA = Math.atan2(p1.x - p2.x, p1.y - p2.y);
         const atanC = Math.atan2(p3.x - p2.x, p3.y - p2.y);
-        
         let diff = atanA - atanC;
         diff = diff * 180 / Math.PI;
-
         return diff;
     },
 
@@ -73,7 +68,7 @@ const Utils = {
             const y = points[i+1];
             const prevX = points[i-2];
             const prevY = points[i-1];
-            len += Utils.dist(x,y,prevX,prevY)
+            len += Utils.dist(x,y,prevX,prevY);
         }
 
         // last edge
@@ -93,7 +88,7 @@ const Utils = {
         return {
             x: totalX / (points.length / 2),
             y: totalY / (points.length / 2)
-        }
+        };
     },
 
     forEachPoint: (points, callback) => {
@@ -101,23 +96,37 @@ const Utils = {
             let p = {
                 x: points[i],
                 y: points[i+1]
-            }
-            callback(p, i)
+            };
+            callback(p, i);
         }
-    }
+    },
 
-}
+    isEquivalent: (a, b) => {
+        const aProps = Object.getOwnPropertyNames(a);
+        const bProps = Object.getOwnPropertyNames(b);
+        if (aProps.length !== bProps.length) {
+            return false;
+        }
+        for (let i = 0; i < aProps.length; i++) {
+            const propName = aProps[i];
+            if (a[propName] !== b[propName]) {
+                return false;
+            }
+        }
+        return true;
+    }
+};
 
 function isBetween (val, a, b) {
     return (val >= a && val <= b);
 }
 
 function polarToCartesian (centerX, centerY, radius, angleInDegrees) {
-  var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
-  return {
-    x: centerX + (radius * Math.cos(angleInRadians)),
-    y: centerY + (radius * Math.sin(angleInRadians))
-  };
+    var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+    return {
+        x: centerX + (radius * Math.cos(angleInRadians)),
+        y: centerY + (radius * Math.sin(angleInRadians))
+    };
 }
 
-export default Utils
+export default Utils;

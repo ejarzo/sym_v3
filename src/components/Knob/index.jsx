@@ -6,10 +6,8 @@ import Utils from '../../utils/Utils.js';
 class Knob extends Component {
     constructor (props) {
         super(props);
-        this.state = {
-            value: props.value
-        };
 
+        this.color = '#fff';
         this.knobRadius = 15;
         this.knobStrokeWidth = 6;
         this.topArcStrokeWidth = 2;
@@ -30,15 +28,14 @@ class Knob extends Component {
         this.dragStart = {
             x: e.clientX,
             y: e.clientY,
-            value: this.state.value
+            value: this.props.value
         }
-        console.log("START",this.dragStart)
     };
 
     handleDrag (e) {
         // TODO add horizontal drag
+        // console.log(e.movementX, e.movementY);
 
-        console.log(e.movementX, e.movementY);
         let xDiff = (e.clientX - this.dragStart.x);
         let yDiff = (e.clientY - this.dragStart.y) * -1;
 
@@ -54,9 +51,6 @@ class Knob extends Component {
         }
         
         this.props.onChange(newVal);
-        this.setState({
-            value: newVal
-        })
     };    
     
     render () {
@@ -79,7 +73,7 @@ class Knob extends Component {
                             {/* background static arc */}
                             <path 
                                 fill="none"
-                                stroke="#fff"
+                                stroke={this.color}
                                 strokeWidth={this.topArcStrokeWidth}
                                 d={Utils.describeArc(
                                     this.knobRadius + this.knobStrokeWidth, 
@@ -92,7 +86,7 @@ class Knob extends Component {
                             {/* dynamic arc */}
                             <path 
                                 fill="none"
-                                stroke="#fff"
+                                stroke={this.color}
                                 strokeWidth={this.knobStrokeWidth}
                                 d={Utils.describeArc(
                                     this.knobRadius + this.knobStrokeWidth, 
@@ -110,4 +104,4 @@ class Knob extends Component {
     }
 }
 
-export default Knob
+export default Knob;

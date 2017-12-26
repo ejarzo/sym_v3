@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
 import Teoria from 'teoria';
 import Select from 'react-select';
@@ -7,66 +8,78 @@ import Fullscreen from 'react-full-screen';
 import Tone from 'tone';
 
 import ShapeCanvas from '../ShapeCanvas';
+import ColorPicker from '../ColorPicker';
 import InstColorController from './InstColorController.jsx';
+import InstrumentPresets from './InstrumentPresets.jsx';
 
-import drawIcon from '../../static/img/draw-icon.svg'
-import editIcon from '../../static/img/edit-icon.svg'
-import drawIconWhite from '../../static/img/draw-icon-white.svg'
-import editIconWhite from '../../static/img/edit-icon-white.svg'
+import drawIcon from '../../static/img/draw-icon.svg';
+import editIcon from '../../static/img/edit-icon.svg';
+import drawIconWhite from '../../static/img/draw-icon-white.svg';
+import editIconWhite from '../../static/img/edit-icon-white.svg';
 
 /* ========================================================================== */
 
 const colorsList = [
-    "#c9563c", // red
-    "#f4b549", // yellow
-    "#2a548e", // blue
-    "#705498", // purple
-    "#33936b"  // green
+    '#c9563c', // red
+    '#f4b549', // yellow
+    '#2a548e', // blue
+    '#705498', // purple
+    '#33936b'  // green
 ];
 
 const tonicsList = [
-    {value:"a",  label: "A"},
-    {value:"a#", label: "A#"},
-    {value:"b",  label: "B"},
-    {value:"c",  label: "C"},
-    {value:"c#", label: "C#"},
-    {value:"d",  label: "D"},
-    {value:"d#", label: "D#"},
-    {value:"e",  label: "E"},
-    {value:"f",  label: "F"},
-    {value:"f#", label: "F#"},
-    {value:"g",  label: "G"},
-    {value:"g#", label: "G#"}
+    { value: 'a',  label: 'A' },
+    { value: 'a#', label: 'A#' },
+    { value: 'b',  label: 'B' },
+    { value: 'c',  label: 'C' },
+    { value: 'c#', label: 'C#' },
+    { value: 'd',  label: 'D' },
+    { value: 'd#', label: 'D#' },
+    { value: 'e',  label: 'E' },
+    { value: 'f',  label: 'F' },
+    { value: 'f#', label: 'F#' },
+    { value: 'g',  label: 'G' },
+    { value: 'g#', label: 'G#' }
 ];
 
 const scalesList = [
-    {value: "major", label: "Major"},
-    {value: "minor", label: "Minor"},
-    {value: "dorian", label: "Dorian"},
-    {value: "phrygian", label: "Phrygian"},
-    {value: "lydian", label: "Lydian"},
-    {value: "mixolydian", label: "Mixolydian"},
-    {value: "locrian", label: "Locrian"},
-    {value: "majorpentatonic", label: "Major Pentatonic"},
-    {value: "minorpentatonic", label: "Minor Pentatonic"},
-    {value: "chromatic", label: "Chromatic"},
-    {value: "blues", label: "Blues"},
-    {value: "doubleharmonic", label: "Double Harmonic"},
-    {value: "flamenco", label: "Flamenco"},
-    {value: "harmonicminor", label: "Harmonic Minor"},
-    {value: "melodicminor", label: "Melodic Minor"},
-    {value: "wholetone", label: "Wholetone"}
+    { value: 'major', label: 'Major' },
+    { value: 'minor', label: 'Minor' },
+    { value: 'dorian', label: 'Dorian' },
+    { value: 'phrygian', label: 'Phrygian' },
+    { value: 'lydian', label: 'Lydian' },
+    { value: 'mixolydian', label: 'Mixolydian' },
+    { value: 'locrian', label: 'Locrian' },
+    { value: 'majorpentatonic', label: 'Major Pentatonic' },
+    { value: 'minorpentatonic', label: 'Minor Pentatonic' },
+    { value: 'chromatic', label: 'Chromatic' },
+    { value: 'blues', label: 'Blues' },
+    { value: 'doubleharmonic', label: 'Double Harmonic' },
+    { value: 'flamenco', label: 'Flamenco' },
+    { value: 'harmonicminor', label: 'Harmonic Minor' },
+    { value: 'melodicminor', label: 'Melodic Minor' },
+    { value: 'wholetone', label: 'Wholetone' }
 ];
 
-const instNamesList = [
-    {value: "keys", label: "Keys"},
-    {value: "duo", label: "Duo"},
-];
+const instNamesList = InstrumentPresets.map((preset) => {
+    return {
+        label: preset.name.label,
+        value: preset.name.value,
+    };
+});
 
 /* ========================================================================== */
 
+const propTypes = {
+    initState: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        tonic: PropTypes.string.isRequired,
+        scale: PropTypes.string.isRequired,
+        tempo: PropTypes.number.isRequired,
+    }).isRequired,
+};
+
 class Project extends Component {
-  
     constructor (props) {
         super(props);
 
@@ -84,17 +97,22 @@ class Project extends Component {
             
             isPlaying: false,
             activeTool: 'draw',
-            activeColorIndex: 0
-        }
-        
+            activeColorIndex: 0,
+            selectedInstruments: [0,1,0,1,0],
+            effectsVals: colorsList.map((color) => {
+                return [0,0,0,0];
+            })
+        };
+        console.log('effects vals', this.state.effectsVals);
+
         // transport
         this.handlePlayClick = this.handlePlayClick.bind(this);
 
         // color and tool
         this.handleColorChange = this.handleColorChange.bind(this);
-        this.toggleActiveTool = this.toggleActiveTool.bind(this);
         this.handleDrawToolClick = this.handleDrawToolClick.bind(this);
         this.handleEditToolClick = this.handleEditToolClick.bind(this);
+        this.toggleActiveTool = this.toggleActiveTool.bind(this);
         this.closeColorPicker = this.closeColorPicker.bind(this);
 
         // toggles
@@ -106,20 +124,22 @@ class Project extends Component {
         this.handleTempoChange = this.handleTempoChange.bind(this);
         this.handleTonicChange = this.handleTonicChange.bind(this);
         this.handleScaleChange = this.handleScaleChange.bind(this);
-        
+
+        // inst colors
+        this.handleInstChange = this.handleInstChange.bind(this);
+
         // canvas
         this.handleClearButtonClick = this.handleClearButtonClick.bind(this);
-        
     }
     
     /* ============================= LIFECYCLE ============================== */
 
-    componentWillMount (){
-        document.addEventListener("keydown", this.handleKeyDown.bind(this));
+    componentWillMount () {
+        document.addEventListener('keydown', this.handleKeyDown.bind(this));
     }
 
     componentWillUnmount () {
-        document.removeEventListener("keydown", this.handleKeyDown.bind(this));
+        document.removeEventListener('keydown', this.handleKeyDown.bind(this));
     }
 
     /* ============================== HANDLERS ============================== */
@@ -136,14 +156,14 @@ class Project extends Component {
     /* --- Tool ------------------------------------------------------------- */
 
     toggleActiveTool () {
-        let newTool = 'draw'
+        let newTool = 'draw';
         if(this.shapeCanvas.canChangeTool()) {
             if (this.state.activeTool === 'draw') {
                 newTool = 'edit';
             }
             this.setState({
                 activeTool: newTool
-            })
+            });
         }
     }
 
@@ -159,7 +179,7 @@ class Project extends Component {
         if(this.shapeCanvas.canChangeTool()) {
             this.setState({
                 activeTool: tool
-            })
+            });
         }
     }
     
@@ -167,8 +187,8 @@ class Project extends Component {
         return () => {
             this.setState({
                 activeColorIndex: colorIndex
-            })
-        }
+            });
+        };
     }
     
     /* --- Canvas ----------------------------------------------------------- */
@@ -176,19 +196,19 @@ class Project extends Component {
     handleGridToggleChange () {
         this.setState({
             isGridActive: !this.state.isGridActive
-        })
+        });
     }
 
     handleSnapToGridToggleChange () {
         this.setState({
             isSnapToGridActive: !this.state.isSnapToGridActive
-        })
+        });
     }
 
     handleAutoQuantizeChange () {
         this.setState({
             isAutoQuantizeActive: !this.state.isAutoQuantizeActive
-        })
+        });
     }
 
     /* --- Musical ---------------------------------------------------------- */
@@ -196,7 +216,7 @@ class Project extends Component {
     handleTempoChange (val) {
         this.setState({
             tempo: val
-        })
+        });
     }
 
     handleTonicChange (val) {
@@ -210,7 +230,7 @@ class Project extends Component {
             const tonic = this.state.scaleObj.tonic;
             this.setState({
                 scaleObj: tonic.scale(val.value),
-            })
+            });
         }
     }
 
@@ -218,10 +238,38 @@ class Project extends Component {
         this.shapeCanvas.clearAll();
     }
 
+    /* --- Instrument Colors ------------------------------------------------ */
+
+    handleInstChange(colorIndex) {
+        return (instrumentIndex) => {
+            const selectedInstruments = this.state.selectedInstruments.slice();
+            selectedInstruments[colorIndex] = instrumentIndex;
+            this.setState({
+                selectedInstruments,
+            });
+        };
+    }
+
+    handleKnobChange(colorIndex) {
+        return (effectIndex, val) => {
+            this.setState(
+                (prevState) => {
+                    const effectsVals = prevState.effectsVals.slice();
+                    const colorEffectsVals = effectsVals[colorIndex].slice();
+                    colorEffectsVals[effectIndex] = val;
+                    effectsVals[colorIndex] = colorEffectsVals;
+                    return {
+                        effectsVals: effectsVals,
+                    };
+                }
+            );
+        };
+    }
+
     /* --- Keyboard Shortcuts ----------------------------------------------- */
 
     handleKeyDown (event) {
-        console.log(event.key);
+        console.log('Keypress:', event.key);
         
         /* Space toggles play */
         if(event.key === ' ') {
@@ -240,7 +288,7 @@ class Project extends Component {
             event.key === '4' || event.key === '5') {
             this.setState({
                 activeColorIndex: parseInt(event.key, 10) - 1
-            })
+            });
         }
 
         /* backspace deletes the selected shape */
@@ -258,8 +306,8 @@ class Project extends Component {
     /* =============================== RENDER =============================== */
 
     render () {    
-        const playButtonClass = this.state.isPlaying ? "ion-stop" : "ion-play";
-        const fullscreenButtonClass = this.state.isFullscreenEnabled ? "ion-arrow-shrink" : "ion-arrow-expand";
+        const playButtonClass = this.state.isPlaying ? 'ion-stop' : 'ion-play';
+        const fullscreenButtonClass = this.state.isFullscreenEnabled ? 'ion-arrow-shrink' : 'ion-arrow-expand';
 
         return (
             <Fullscreen
@@ -272,9 +320,11 @@ class Project extends Component {
                     {/* Transport Controls */}
                     <div className="controls-section transport-controls">
                         <div className="ctrl-elem">
-                            <button className="icon-button" 
-                                    onClick={this.handlePlayClick} 
-                                    title="Play project (SPACE)">
+                            <button 
+                                className="icon-button" 
+                                onClick={this.handlePlayClick} 
+                                title="Play project (SPACE)"
+                            >
                                 <i className={playButtonClass}></i>
                             </button>
                         </div>
@@ -292,6 +342,7 @@ class Project extends Component {
                         <div className="ctrl-elem">
                             <ColorPicker 
                                 ref={(c) => this.colorPicker = c}
+                                colorsList={colorsList}
                                 activeColorIndex={this.state.activeColorIndex}
                                 onColorChange={this.handleColorChange}
                             />
@@ -300,7 +351,7 @@ class Project extends Component {
                         {/* Tool Select */}
                         <div className="ctrl-elem">
                             <span
-                                className={"tool-button " + (this.state.activeTool === 'draw' ? "selected" : "")}
+                                className={'tool-button ' + (this.state.activeTool === 'draw' ? 'selected' : '')}
                                 onClick={this.handleDrawToolClick}
                                 title="Draw Tool (TAB to toggle)">
                                 <img src={this.state.activeTool === 'draw' ? drawIconWhite : drawIcon} alt="draw tool"/>
@@ -308,7 +359,7 @@ class Project extends Component {
                         </div>
                         <div className="ctrl-elem no-margin">
                             <span 
-                                className={"tool-button " + (this.state.activeTool === 'edit' ? "selected" : "")}
+                                className={'tool-button ' + (this.state.activeTool === 'edit' ? 'selected' : '')}
                                 onClick={this.handleEditToolClick}
                                 title="Edit Tool (TAB to toggle)">
                                 <img src={this.state.activeTool === 'edit' ? editIconWhite : editIcon} alt="edit tool"/>
@@ -331,8 +382,8 @@ class Project extends Component {
                                 className="checkbox-label" 
                                 htmlFor="grid-toggle"
                                 style={{
-                                    borderTopLeftRadius: "3px", 
-                                    borderBottomLeftRadius: "3px"
+                                    borderTopLeftRadius: '3px', 
+                                    borderBottomLeftRadius: '3px'
                                 }}>
                                 Grid
                             </label>
@@ -354,8 +405,8 @@ class Project extends Component {
                             <label 
                                 className="checkbox-label" 
                                 style={{
-                                    borderTopRightRadius: "3px", 
-                                    borderBottomRightRadius: "3px"
+                                    borderTopRightRadius: '3px', 
+                                    borderBottomRightRadius: '3px'
                                 }}
                                 htmlFor="auto-quantize-toggle">
                                 Sync
@@ -449,7 +500,6 @@ class Project extends Component {
                             </button>
                         </div>
                     </div>
-                
                 </div>
                 
                 {/* The Canvas */}
@@ -459,7 +509,7 @@ class Project extends Component {
                     colorIndex={this.state.activeColorIndex}
                     activeTool={this.state.activeTool}
                     closeColorPicker={this.closeColorPicker}
-                    
+                    selectedInstruments={this.state.selectedInstruments}
                     isAutoQuantizeActive={this.state.isAutoQuantizeActive}
                     isPlaying={this.state.isPlaying}
                     scaleObj={this.state.scaleObj}
@@ -474,13 +524,18 @@ class Project extends Component {
                 <div className="inst-selectors">
                     <ul className="inst-list">
                         {colorsList.map((color, i) => {
+                            const selectedInstrumentIndex = this.state.selectedInstruments[i];
                             return (
                                 <InstColorController 
                                     key={i}
                                     instNamesList={instNamesList}
+                                    handleInstChange={this.handleInstChange(i)}
+                                    onKnobChange={this.handleKnobChange(i)}
+                                    dynamicParamVals={this.state.effectsVals[i]}
                                     color={color}
+                                    synthParams={InstrumentPresets[selectedInstrumentIndex]}
                                 />
-                            )
+                            );
                         })}
                     </ul>
                 </div>
@@ -490,69 +545,6 @@ class Project extends Component {
     }
 }
 
-/*
-    A dropdown used to select the draw color.
-*/
-class ColorPicker extends Component {
-    constructor (props) {
-        super(props);
-        this.state = {
-            isOpen: false
-        }
+Project.propTypes = propTypes;
 
-        this.handleColorPickerClick = this.handleColorPickerClick.bind(this);
-    }
-
-    handleColorChange (colorIndex) {
-        return () => {
-            this.props.onColorChange(colorIndex);
-        }
-    }
-
-    handleColorPickerClick () {
-        this.setState({
-            isOpen: !this.state.isOpen
-        })
-    }
-
-    close () {
-       this.setState({
-           isOpen: false
-       }) 
-    }
-
-    render () {
-        const colorPickercContent = this.state.isOpen ? (
-            <div className="project-color-picker-options">
-                {colorsList.map((color, i) => {
-                    const style = { backgroundColor: color }       
-                    return i === this.props.activeColorIndex ? null : (
-                        <div 
-                            key={i}
-                            className="color-option" 
-                            style={style}
-                            onClick={this.props.onColorChange(i)}
-                        >
-                        </div>);
-                    })
-                }
-            </div>) : null;
-        
-        return (
-                <div
-                    title="Select Draw Color (Numbers 1-5)" 
-                    className="project-color-picker"
-                    onClick={this.handleColorPickerClick}>
-                    <div 
-                        className="color-picker-button"
-                        style={{
-                            backgroundColor: colorsList[this.props.activeColorIndex]
-                        }}>
-                    </div>
-                    {colorPickercContent}
-                </div>
-            );
-    }
-}
-
-export default Project
+export default Project;
